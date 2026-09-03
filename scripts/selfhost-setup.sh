@@ -25,8 +25,17 @@ if ! node -e 'process.exit((process.versions.node.split(".").map(Number)[0]||0) 
 fi
 pnpm install
 
-echo "==> [2/5] Cloudflare login (a URL/browser will appear — authorize it, and enable the access:write scope)"
-pnpm alchemy login
+echo "==> [2/5] Cloudflare auth"
+if [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then
+  echo "    CLOUDFLARE_API_TOKEN detected — using it (skipping interactive OAuth login)."
+else
+  echo "    No CLOUDFLARE_API_TOKEN set — falling back to interactive OAuth login."
+  echo "    NOTE: in a Codespace the localhost:9976 callback usually fails (ERR_CONNECTION_REFUSED)."
+  echo "    If it does: press Ctrl+C, create a Cloudflare API token, run"
+  echo "        export CLOUDFLARE_API_TOKEN=...   (and CLOUDFLARE_ACCOUNT_ID=... if asked)"
+  echo "    then re-run this script."
+  pnpm alchemy login
+fi
 pnpm alchemy cloudflare bootstrap
 
 echo "==> [3/5] DataForSEO credential"
