@@ -23,11 +23,13 @@ import {
 } from "@/client/lib/posthog";
 import { NotFound } from "@/client/components/NotFound";
 import appCss from "@/client/styles/app.css?url";
+import brandCss from "@/client/styles/brand.css?url";
 import { useSession } from "@/lib/auth-client";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
 import { Toaster } from "sonner";
 import { queryClient } from "@/client/tanstack-db";
 import { getActiveOrganizationId } from "@/lib/auth-session";
+import { APP_NAME } from "@/shared/brand";
 
 // Capture Google link error params before the router starts — a route loader
 // redirect would otherwise replace the URL and lose them. See googleLinkError.ts.
@@ -37,7 +39,7 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        title: "OpenSEO",
+        title: APP_NAME,
       },
       {
         charSet: "utf-8",
@@ -66,6 +68,7 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "stylesheet", href: brandCss },
       {
         rel: "apple-touch-icon",
         sizes: "180x180",

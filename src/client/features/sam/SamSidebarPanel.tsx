@@ -7,6 +7,7 @@ import {
   invalidateSamSessions,
   samSessionsQueryOptions,
 } from "@/client/features/sam/samQueries";
+import { APP_NAME } from "@/shared/brand";
 
 const BETA_NOTICE_DISMISSED_KEY = "sam-beta-notice-dismissed";
 
@@ -37,8 +38,8 @@ function BetaNotice() {
         </button>
       </div>
       <p className="mt-1.5 text-xs text-base-content/70">
-        For more powerful AI workflows, use the OpenSEO MCP with your own agent
-        like Claude Code or Hermes.
+        For more powerful AI workflows, use the {APP_NAME} MCP with your own
+        agent like Claude Code or Hermes.
       </p>
       <Link to="/ai" className="link link-primary mt-1.5 inline-block text-xs">
         Set up the MCP →

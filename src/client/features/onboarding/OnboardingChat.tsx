@@ -11,6 +11,7 @@ import {
   invalidateOnboardingChatState,
   onboardingChatStateQueryOptions,
 } from "./onboardingChatQueries";
+import { APP_NAME } from "@/shared/brand";
 
 // Full-viewport chat surface. Breaks out of the centered, padded AuthPageShell
 // with `fixed inset-0` so the chat fills the screen. There's no header bar —
@@ -86,7 +87,7 @@ function SiteForm({ projectId }: { projectId: string }) {
         <div className="space-y-3 text-center">
           <img
             src="/transparent-logo.png"
-            alt="OpenSEO"
+            alt={APP_NAME}
             className="mx-auto size-10 rounded-lg"
           />
           <h1 className="text-xl font-semibold">Tell us about your website.</h1>

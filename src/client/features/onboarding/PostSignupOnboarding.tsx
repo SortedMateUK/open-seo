@@ -12,6 +12,7 @@ import {
   WORK_FOR_OPTIONS,
 } from "@/client/features/onboarding/onboardingModel";
 import { SearchConsoleOnboardingStep } from "@/client/features/onboarding/SearchConsoleOnboardingStep";
+import { APP_NAME } from "@/shared/brand";
 
 type PostSignupOnboardingProps = {
   firstName: string;
@@ -61,7 +62,7 @@ export function PostSignupOnboarding({
       <div className="text-center space-y-3">
         <img
           src="/transparent-logo.png"
-          alt="OpenSEO"
+          alt={APP_NAME}
           className="mx-auto size-10 rounded-lg"
         />
         <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
@@ -70,8 +71,8 @@ export function PostSignupOnboarding({
         <h1 className="text-xl font-semibold">
           {title ??
             (firstName
-              ? `Welcome to OpenSEO, ${firstName}!`
-              : "Welcome to OpenSEO!")}
+              ? `Welcome to ${APP_NAME}, ${firstName}!`
+              : `Welcome to ${APP_NAME}!`)}
         </h1>
         <p className="text-sm text-base-content/60">
           {helperText ?? "A few quick answers to set things up."}
@@ -116,7 +117,7 @@ export function PostSignupOnboarding({
           />
         ) : step === 2 ? (
           <OnboardingChoiceGroup
-            title="How did you find OpenSEO?"
+            title={`How did you find ${APP_NAME}?`}
             options={[...SOURCE_OPTIONS]}
             selectedValues={answers.source ? [answers.source] : []}
             onToggle={(source) => updateAnswers({ source })}

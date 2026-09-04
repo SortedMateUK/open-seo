@@ -10,6 +10,7 @@ import {
 import { useSamAccess } from "./useSamAccess";
 import { SamSetupGate } from "./SamSetupGate";
 import { SamConversation } from "./SamConversation";
+import { APP_NAME } from "@/shared/brand";
 
 /**
  * The SAM route's content: the active conversation, full-width. The chat
@@ -136,7 +137,7 @@ export function SamChat({
       <div className="space-y-1">
         <p className="text-lg font-medium">What should we work on?</p>
         <p className="max-w-sm text-sm text-base-content/60">
-          SAM is your in-app SEO agent with access to every OpenSEO research
+          SAM is your in-app SEO agent with access to every {APP_NAME} research
           tool. Start a chat to get going.
         </p>
       </div>

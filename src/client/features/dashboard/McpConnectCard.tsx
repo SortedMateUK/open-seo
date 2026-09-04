@@ -4,12 +4,13 @@ import { CopyButton } from "@/client/features/ai-mcp/SetupControls";
 import { captureClientEvent } from "@/client/lib/posthog";
 import type { DashboardActivation } from "@/server/features/dashboard/services/DashboardService";
 import { dismissDashboardMcpCard } from "@/serverFunctions/dashboard";
+import { APP_NAME } from "@/shared/brand";
 
 function firstPrompts(domain: string | null): string[] {
   const site = domain ?? "my site";
   return [
-    `Review ${site}. Ideas for what keywords we could target? Use OpenSEO`,
-    "Research my competitors top pages and keywords and tell me what's working. Use OpenSEO",
+    `Review ${site}. Ideas for what keywords we could target? Use ${APP_NAME}`,
+    `Research my competitors top pages and keywords and tell me what's working. Use ${APP_NAME}`,
   ];
 }
 
@@ -93,15 +94,15 @@ export function McpConnectCard({
             </ul>
             <p className="text-xs text-base-content/50">
               Waiting for your first call — this card disappears once your agent
-              talks to OpenSEO.
+              talks to {APP_NAME}.
             </p>
           </>
         ) : (
           <>
             <div className="space-y-2 text-sm text-base-content/70">
               <p>
-                OpenSEO is designed to give your AI agent the data it needs to
-                build a great SEO strategy and help you execute it.
+                {APP_NAME} is designed to give your AI agent the data it needs
+                to build a great SEO strategy and help you execute it.
               </p>
               <p>
                 This way you aren&rsquo;t limited on &ldquo;AI credits&rdquo;.

@@ -23,6 +23,7 @@ import {
   UpgradeSidebar,
   WelcomeMessage,
 } from "./OnboardingChatParts";
+import { APP_NAME } from "@/shared/brand";
 
 // Friendly labels for each tool Sam can run, so the chat shows what it's doing
 // rather than going silent while it gathers site data. `running` shows while the
@@ -65,8 +66,8 @@ const resolveToolLabel: ResolveToolLabel = (partType) =>
   TOOL_LABELS[partType] ?? null;
 
 const SUGGESTED_QUESTIONS = [
-  "How will OpenSEO help me get more traffic?",
-  "Compare OpenSEO and Claude",
+  `How will ${APP_NAME} help me get more traffic?`,
+  `Compare ${APP_NAME} and Claude`,
   "What do I get after I upgrade?",
   "How does the Google Search Console integration work?",
   "Right fit for consultants and agencies?",
