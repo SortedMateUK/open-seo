@@ -98,6 +98,16 @@ Open the printed URL and sign in with Cloudflare Access. To add teammates, add t
 
 Deployments created before password accounts existed have no `AUTH_MODE` in `.env.selfhost`, which still means Cloudflare Access, so they keep working unchanged. Deployments upgraded from older versions (which gave each user a separate workspace) show a one-time dashboard banner — clicking it migrates all previous per-user work into the shared workspace.
 
+### Machine access (optional): Access service tokens
+
+To call OpenSEO from a script or another server — for example the MCP server at `/mcp` from a scheduled job — use a [Cloudflare Access service token](https://developers.cloudflare.com/cloudflare-one/identity/service-tokens/) instead of a browser login. This needs `AUTH_MODE=cloudflare_access`.
+
+1. In Zero Trust, **Access → Service credentials → Create service token**. Keep the client id and secret somewhere safe; the secret is shown once.
+2. Put the token's **id** (a UUID) in `.env.selfhost` as `ACCESS_SERVICE_TOKEN_IDS` (comma-separate several) and redeploy. The deploy adds a Service Auth policy admitting exactly those tokens, and sets `ACCESS_ALLOW_SERVICE_TOKENS=true` on the Worker.
+3. Send `CF-Access-Client-Id` and `CF-Access-Client-Secret` headers on each request.
+
+Each token works in the shared workspace as its own service user. If you manage the Access application yourself (`TEAM_DOMAIN` and `POLICY_AUD`), add the Service Auth policy there and set `ACCESS_ALLOW_SERVICE_TOKENS=true`.
+
 ## Troubleshooting
 
 - `https://<your-worker-hostname>/api/health` reports runtime configuration checks and database status.

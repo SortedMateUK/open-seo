@@ -54,6 +54,8 @@ declare namespace Cloudflare {
     EVERYAPP_AUDIENCE?: string;
     TEAM_DOMAIN?: string;
     POLICY_AUD?: string;
+    /** "true": accept Cloudflare Access service tokens the application's policies admit. */
+    ACCESS_ALLOW_SERVICE_TOKENS?: string;
     POSTHOG_PUBLIC_KEY?: string;
     POSTHOG_HOST?: string;
     BETTER_AUTH_SECRET?: string;

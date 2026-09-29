@@ -10,6 +10,7 @@ import { unstable_readConfig } from "wrangler";
 import { z } from "zod";
 import {
   emailAccessGate,
+  parseServiceTokenIds,
   HOSTED_PROD_STAGE,
   readWorkersSubdomain,
   requireAllowedEmails,
@@ -188,8 +189,16 @@ const resolveSelfHostAccess = (
   Effect.gen(function* () {
     let teamDomain = yield* optionalVar("TEAM_DOMAIN");
     let policyAud: Alchemy.Input<string> = yield* optionalVar("POLICY_AUD");
+    const serviceTokenIds = parseServiceTokenIds(
+      yield* optionalVar("ACCESS_SERVICE_TOKEN_IDS"),
+    );
+    // Self-managed Access: the operator admits service tokens in their own
+    // application and opts the app in with ACCESS_ALLOW_SERVICE_TOKENS.
+    const allowServiceTokens =
+      serviceTokenIds.length > 0 ||
+      (yield* optionalVar("ACCESS_ALLOW_SERVICE_TOKENS")) === "true";
     if (!provision || (teamDomain && policyAud)) {
-      return { teamDomain, policyAud };
+      return { teamDomain, policyAud, allowServiceTokens };
     }
     const { accountId } = yield* yield* Cloudflare.CloudflareEnvironment;
 
@@ -251,11 +260,12 @@ const resolveSelfHostAccess = (
         applicationName: `open-seo ${stage}`,
         domain: `${workerName(stage)}.${subdomain}`,
         emails: allowedEmails,
+        serviceTokenIds,
       });
       policyAud = application.aud;
     }
 
-    return { teamDomain, policyAud };
+    return { teamDomain, policyAud, allowServiceTokens };
   });
 
 // Secrets/vars resolve from Config (`Config.redacted` → Cloudflare
@@ -511,6 +521,9 @@ export default Alchemy.Stack(
         AUDIT_BROWSER_RENDERING: "true",
         TEAM_DOMAIN: access.teamDomain,
         POLICY_AUD: access.policyAud,
+        ...(access.allowServiceTokens
+          ? { ACCESS_ALLOW_SERVICE_TOKENS: "true" }
+          : {}),
 
         // Service binding to the audit worker's AuditEngine entrypoint
         // (cancel + GDPR erasure of scratchpad state; env key = binding
