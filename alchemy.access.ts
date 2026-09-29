@@ -65,6 +65,12 @@ export const emailAccessGate = (options: {
   applicationName: string;
   domain: string;
   emails: string[];
+  /**
+   * Access service token ids (UUIDs) admitted without a login, for
+   * machine-to-machine use of the app and its MCP server. The app accepts them
+   * only with ACCESS_ALLOW_SERVICE_TOKENS=true.
+   */
+  serviceTokenIds?: string[];
 }) =>
   Effect.gen(function* () {
     const allow = yield* Cloudflare.Access.Policy(options.policyId, {
@@ -72,10 +78,42 @@ export const emailAccessGate = (options: {
       decision: "allow",
       include: options.emails.map((email) => ({ email: { email } })),
     });
+    const policies = [allow.policyId];
+    if (options.serviceTokenIds?.length) {
+      const services = yield* Cloudflare.Access.Policy(
+        `${options.policyId}ServiceTokens`,
+        {
+          name: `${options.policyName} (service tokens)`,
+          decision: "non_identity",
+          include: options.serviceTokenIds.map((tokenId) => ({
+            serviceToken: { tokenId },
+          })),
+        },
+      );
+      policies.push(services.policyId);
+    }
     return yield* Cloudflare.Access.Application(options.applicationId, {
       type: "self_hosted",
       name: options.applicationName,
       domain: options.domain,
-      policies: [allow.policyId],
+      policies,
     });
   });
+
+const SERVICE_TOKEN_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** ACCESS_SERVICE_TOKEN_IDS: comma-separated Access service token UUIDs (optional). */
+export const parseServiceTokenIds = (value: string): string[] => {
+  const ids = value
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const bad = ids.filter((id) => !SERVICE_TOKEN_ID.test(id));
+  if (bad.length) {
+    throw new Error(
+      `ACCESS_SERVICE_TOKEN_IDS must be Access service token ids (UUIDs, comma-separated); not: ${bad.join(", ")}`,
+    );
+  }
+  return ids;
+};

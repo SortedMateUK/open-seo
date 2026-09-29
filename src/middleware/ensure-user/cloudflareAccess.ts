@@ -3,6 +3,7 @@ import { createRemoteJWKSet, jwtVerify, type JWTPayload } from "jose";
 import { AppError } from "@/server/lib/errors";
 import { validateTeamDomain } from "@/shared/selfhost-checks";
 import { classifyAccessVerificationError } from "./accessTokenErrors";
+import { identityFromAccessPayload } from "./accessIdentity";
 import { resolveSharedWorkspaceContext } from "./delegated";
 import type { EnsuredUserContext } from "./types";
 
@@ -87,12 +88,14 @@ export async function resolveCloudflareAccessContext(
     throw classifyAccessVerificationError(error);
   }
 
-  const userId = typeof payload.sub === "string" ? payload.sub : null;
-  const userEmail = typeof payload.email === "string" ? payload.email : null;
+  const identity = identityFromAccessPayload(
+    payload,
+    env.ACCESS_ALLOW_SERVICE_TOKENS === "true",
+  );
 
-  if (!userId || !userEmail) {
+  if (!identity) {
     throw new AppError("UNAUTHENTICATED");
   }
 
-  return resolveSharedWorkspaceContext(userId, userEmail);
+  return resolveSharedWorkspaceContext(identity.userId, identity.userEmail);
 }

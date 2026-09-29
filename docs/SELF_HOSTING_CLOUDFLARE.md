@@ -60,6 +60,16 @@ This provisions the D1 database, KV namespaces, and R2 bucket, applies the datab
 
 To manage the Access application yourself instead, set `TEAM_DOMAIN` (`https://your-team.cloudflareaccess.com`) and `POLICY_AUD` (the application's audience tag) in `.env.selfhost` — the deploy then provisions no Access resources.
 
+### Machine access (optional): Access service tokens
+
+To call OpenSEO from a script or another server — for example the MCP server at `/mcp` from a scheduled job — use a [Cloudflare Access service token](https://developers.cloudflare.com/cloudflare-one/identity/service-tokens/) instead of a browser login:
+
+1. In Zero Trust, **Access → Service credentials → Create service token**. Keep the client id and secret somewhere safe; the secret is shown once.
+2. Put the token's **id** (a UUID) in `.env.selfhost` as `ACCESS_SERVICE_TOKEN_IDS` (comma-separate several) and redeploy. The deploy adds a Service Auth policy admitting exactly those tokens, and sets `ACCESS_ALLOW_SERVICE_TOKENS=true` on the Worker.
+3. Send `CF-Access-Client-Id` and `CF-Access-Client-Secret` headers on each request.
+
+Each token works in the shared workspace as its own service user. If you manage the Access application yourself (`TEAM_DOMAIN` and `POLICY_AUD`), add the Service Auth policy there and set `ACCESS_ALLOW_SERVICE_TOKENS=true`.
+
 ## 5) Validate setup
 
 1. Open the Worker URL printed at the end of the deploy.
