@@ -76,3 +76,10 @@ overrides:
   mysql2: "^3.23.1"
   "nanoid@3": "^3.3.18"
   "toml@4": "^4.2.0"
+
+# alchemy's Access.Application PUT drops oauth_configuration, wiping Managed
+# OAuth (set in the dashboard for MCP clients) on any deploy that changes the
+# Access app. The patch carries the live value through. Drop once upstream
+# alchemy does the same.
+patchedDependencies:
+  alchemy@2.0.0-beta.61: patches/alchemy@2.0.0-beta.61.patch
