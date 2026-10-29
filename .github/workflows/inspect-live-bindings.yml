@@ -8,6 +8,8 @@ name: Inspect live bindings (read only)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [sortedmate/inspect-live-bindings]
 
 permissions:
   contents: read
