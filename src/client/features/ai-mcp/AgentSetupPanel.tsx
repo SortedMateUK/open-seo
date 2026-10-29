@@ -1,9 +1,9 @@
 import type { ComponentProps, ReactNode } from "react";
 import { Package } from "lucide-react";
 import { CopyButton } from "@/client/components/CopyButton";
+import { APP_NAME } from "@/shared/brand";
 
-export const AGENT_SETUP_DESCRIPTION =
-  "Paste this prompt into your agent to automatically configure OpenSEO for you.";
+export const AGENT_SETUP_DESCRIPTION = `Paste this prompt into your agent to automatically configure ${APP_NAME} for you.`;
 
 export function AgentSetupPanel({
   prompt,
@@ -28,7 +28,7 @@ export function AgentSetupPanel({
             <Package className="size-5 text-muted-foreground" />
           </span>
           <div>
-            <p className="text-sm font-medium">OpenSEO plugin</p>
+            <p className="text-sm font-medium">{APP_NAME} plugin</p>
             <p className="mt-1 text-xs text-muted-foreground">
               MCP connection + SEO skills
             </p>

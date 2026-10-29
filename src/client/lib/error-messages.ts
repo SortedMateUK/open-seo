@@ -5,6 +5,7 @@ import {
   isEveryAppClientAuthMode,
   isHostedClientAuthMode,
 } from "@/lib/auth-mode";
+import { APP_NAME } from "@/shared/brand";
 
 /**
  * Copy for an error we did not expect. Hosted users cannot read our logs, so
@@ -17,10 +18,9 @@ export const UNEXPECTED_ERROR_MESSAGE = isHostedClientAuthMode()
 const STANDARD_MESSAGES: Record<ErrorCode, string> = {
   UNAUTHENTICATED: "Please sign in and try again.",
   AUTH_CONFIG_MISSING: isEveryAppClientAuthMode()
-    ? "OpenSEO can't reach your Every App gateway for this right now. An owner or admin can check its setup with pnpm everyapp status."
-    : "OpenSEO auth is not configured. Follow the README setup steps for Cloudflare Access.",
-  PAYMENT_REQUIRED:
-    "An active hosted subscription is required before you can use OpenSEO.",
+    ? `${APP_NAME} can't reach your Every App gateway for this right now. An owner or admin can check its setup with pnpm everyapp status.`
+    : `${APP_NAME} auth is not configured. Follow the README setup steps for Cloudflare Access.`,
+  PAYMENT_REQUIRED: `An active hosted subscription is required before you can use ${APP_NAME}.`,
   INSUFFICIENT_CREDITS:
     "You don't have enough credits for this. Upgrade your plan or buy more credits to keep going.",
   PAYMENT_METHOD_REQUIRED:

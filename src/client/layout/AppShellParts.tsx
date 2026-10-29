@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/client/components/ui/dialog";
+import { APP_NAME } from "@/shared/brand";
 
 function SeoApiStatusBanners({
   shouldShowSeoApiWarning,
@@ -43,8 +44,8 @@ function SeoApiStatusBanners({
             </>
           ) : (
             <>
-              Setup needed: add your DataForSEO API key to use OpenSEO features.
-              See the quick steps on the {helpLink}.
+              Setup needed: add your DataForSEO API key to use {APP_NAME}{" "}
+              features. See the quick steps on the {helpLink}.
             </>
           )}
         </AppBanner>
@@ -75,8 +76,8 @@ function LegacyDockerBanner() {
   }
   return (
     <AppBanner variant="info" icon={<Info className="size-4 shrink-0" />}>
-      A new OpenSEO Docker setup starts in seconds and supports accounts. This
-      image keeps getting updates, and moving keeps your data.{" "}
+      A new {APP_NAME} Docker setup starts in seconds and supports accounts.
+      This image keeps getting updates, and moving keeps your data.{" "}
       <a
         href={DOCKER_MOVE_URL}
         target="_blank"
@@ -125,7 +126,7 @@ function MissingSeoSetupModal({ onClose }: { onClose: () => void }) {
                   setup guide has the steps.
                 </>
               ) : (
-                "Add your DataForSEO API key to start using OpenSEO."
+                `Add your DataForSEO API key to start using ${APP_NAME}.`
               )}
             </DialogDescription>
           </div>

@@ -18,6 +18,7 @@ import { SerpWidget } from "./SerpWidget";
 import "@/client/styles/app.css";
 // oxlint-disable-next-line import/no-unassigned-import -- Widget document overrides follow the app stylesheet.
 import "./widgets.css";
+import { APP_NAME } from "@/shared/brand";
 
 function Widget() {
   const host = useWidgetHost();
@@ -35,14 +36,14 @@ function Widget() {
   return (
     <main className="space-y-4 p-4">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
-        <span className="font-medium">OpenSEO</span>
+        <span className="font-medium">{APP_NAME}</span>
         {appUrl && (
           <Button
             variant="ghost"
             disabled={!host.isConnected || host.action.isPending}
             onClick={() => host.open(appUrl)}
           >
-            Open in OpenSEO
+            Open in {APP_NAME}
             <ExternalLink />
           </Button>
         )}
@@ -57,7 +58,7 @@ function Widget() {
       {!snapshot && !host.error ? (
         <div role="status" aria-busy="true" className="space-y-3">
           <span className="text-sm text-muted-foreground">
-            Loading OpenSEO results…
+            Loading {APP_NAME} results…
           </span>
           <Skeleton className="h-10" />
           <Skeleton className="h-24" />
@@ -68,7 +69,7 @@ function Widget() {
         <SerpWidget host={host} data={serp.data} />
       ) : snapshot ? (
         <p role="alert">
-          Could not read these results. Ask your assistant to run the OpenSEO
+          Could not read these results. Ask your assistant to run the {APP_NAME}
           tool again.
         </p>
       ) : null}

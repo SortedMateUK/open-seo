@@ -6,6 +6,7 @@ import { useCreditBalance } from "@/client/features/billing/useCreditBalance";
 import { captureClientEvent } from "@/client/lib/posthog";
 import { useCanManageBilling } from "@/client/features/team/organizationQueries";
 import { BILLING_ROUTE, SUBSCRIBE_ROUTE } from "@/shared/billing";
+import { APP_NAME } from "@/shared/brand";
 
 export function FreePlanBanner() {
   const {
@@ -142,7 +143,7 @@ export function FreePlanBanner() {
     return (
       <AppBanner variant="warning">
         You&rsquo;re running low on credits. {creditsActionLink} to keep using
-        OpenSEO.
+        {APP_NAME}.
       </AppBanner>
     );
   }
@@ -150,7 +151,7 @@ export function FreePlanBanner() {
   if (isFreePlan) {
     return (
       <AppBanner variant="info">
-        We hope you&rsquo;re enjoying OpenSEO!{" "}
+        We hope you&rsquo;re enjoying {APP_NAME}!{" "}
         <Link
           to={SUBSCRIBE_ROUTE}
           search={{ upgrade: true }}

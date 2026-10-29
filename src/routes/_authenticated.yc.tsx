@@ -23,6 +23,7 @@ import { useSession } from "@/lib/auth-client";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
 import { BILLING_ROUTE } from "@/shared/billing";
 import { SUPPORT_EMAIL } from "@/client/lib/support";
+import { APP_NAME } from "@/shared/brand";
 
 const PLAN_FEATURES = [
   "Keyword research, backlinks, rank tracking, and site audits",
@@ -103,10 +104,10 @@ function YcPlanPage() {
       <div className="text-center space-y-3">
         <img
           src="/transparent-logo.png"
-          alt="OpenSEO"
+          alt={APP_NAME}
           className="mx-auto size-10 rounded-lg"
         />
-        <h1 className="text-xl font-semibold">OpenSEO for YC founders</h1>
+        <h1 className="text-xl font-semibold">{APP_NAME} for YC founders</h1>
         <p className="text-sm text-muted-foreground">
           A bigger monthly credit pool for teams doing serious SEO work, with
           your first month free through the YC deal.

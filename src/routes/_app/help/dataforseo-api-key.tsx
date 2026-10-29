@@ -4,6 +4,7 @@ import {
   helpLinkClassName,
   SecretHelpPage,
 } from "@/client/features/help/SecretHelpPage";
+import { APP_NAME } from "@/shared/brand";
 
 const DATAFORSEO_API_ACCESS_URL = "https://app.dataforseo.com/api-access";
 
@@ -37,11 +38,11 @@ function DataforseoApiKeyHelpPage() {
       title="Set up your DataForSEO API key"
       intro={
         <>
-          OpenSEO needs the <code>DATAFORSEO_API_KEY</code> secret before
+          {APP_NAME} needs the <code>DATAFORSEO_API_KEY</code> secret before
           keyword, domain, and SEO data workflows can run.
         </>
       }
-      everyAppIntro="OpenSEO's keyword, domain, backlink and rank data comes from DataForSEO. On Every App the gateway holds the key once, for every app."
+      everyAppIntro={`${APP_NAME}'s keyword, domain, backlink and rank data comes from DataForSEO. On Every App the gateway holds the key once, for every app.`}
       secretName="DATAFORSEO_API_KEY"
       steps={
         <>
@@ -62,7 +63,7 @@ function DataforseoApiKeyHelpPage() {
             the value:
             <CommandBlock command="pnpm everyapp secret set DATAFORSEO_API_KEY" />
           </li>
-          <li>Reload OpenSEO: it uses the key on its next request.</li>
+          <li>Reload {APP_NAME}: it uses the key on its next request.</li>
         </>
       }
       dashboardPasteStep="Paste the base64 value from the terminal command above and save."

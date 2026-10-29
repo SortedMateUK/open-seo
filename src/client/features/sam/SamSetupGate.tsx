@@ -4,6 +4,7 @@ import { GateCard } from "@/client/components/GateCard";
 import { Alert, AlertDescription } from "@/client/components/ui/alert";
 import { Button } from "@/client/components/ui/button";
 import { isEveryAppClientAuthMode } from "@/lib/auth-mode";
+import { APP_NAME } from "@/shared/brand";
 
 export function SamSetupGate({
   errorMessage,
@@ -23,18 +24,18 @@ export function SamSetupGate({
         <>
           {isEveryAppClientAuthMode() ? (
             <p>
-              SAM, OpenSEO&apos;s in-app AI agent, uses OpenRouter through your
-              Every App gateway. An admin creates a key on OpenRouter and sets
-              it on the gateway with{" "}
+              SAM, {APP_NAME}&apos;s in-app AI agent, uses OpenRouter through
+              your Every App gateway. An admin creates a key on OpenRouter and
+              sets it on the gateway with{" "}
               <code>pnpm everyapp secret set OPENROUTER_API_KEY</code>, then
               confirm here.
             </p>
           ) : (
             <p>
-              SAM, OpenSEO&apos;s in-app AI agent, needs an OpenRouter API key.
-              Create a key on OpenRouter, set it as the{" "}
+              SAM, {APP_NAME}&apos;s in-app AI agent, needs an OpenRouter API
+              key. Create a key on OpenRouter, set it as the{" "}
               <code>OPENROUTER_API_KEY</code> environment variable, restart
-              OpenSEO, then confirm here.
+              {APP_NAME}, then confirm here.
             </p>
           )}
           <p className="text-xs">
