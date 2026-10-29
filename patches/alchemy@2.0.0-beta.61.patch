@@ -22,10 +22,21 @@ index c8ab1322347095c9f7cfda63c382c0b6ad17775d..e8c09628292fa1f6d6c640835067a8a1
  const policyIdOf = (p) => typeof p === "string" ? p : p.id;
  const toRequestPolicy = (p) => {
 diff --git a/lib/Cloudflare/Workers/WorkerProvider.js b/lib/Cloudflare/Workers/WorkerProvider.js
-index 5c4c4555cbbe92330341c470079addd7af5e94cb..f513e55992d961fde70c29ca16453e0f868104a3 100644
+index 5c4c4555cbbe92330341c470079addd7af5e94cb..a611364d752a95266349835f24fb3351d0c69aa5 100644
 --- a/lib/Cloudflare/Workers/WorkerProvider.js
 +++ b/lib/Cloudflare/Workers/WorkerProvider.js
-@@ -1059,7 +1059,10 @@ export const LiveWorkerProvider = () => Provider.effect(Worker, Effect.gen(funct
+@@ -895,7 +895,9 @@ export const LiveWorkerProvider = () => Provider.effect(Worker, Effect.gen(funct
+         // Add environment variables as metadata bindings
+         if (news.env) {
+             for (const [key, value] of Object.entries(news.env)) {
+-                if (value === undefined)
++                // An unset optional secret can arrive as null once resolved; skip
++                // it too, or it becomes a null json binding over the kept secret.
++                if (value === undefined || value === null)
+                     continue;
+                 if (metadataBindings.some((b) => b.name === key))
+                     continue;
+@@ -1059,7 +1061,10 @@ export const LiveWorkerProvider = () => Provider.effect(Worker, Effect.gen(funct
              compatibilityFlags: compatibility.flags,
              containers: metadataContainers.length > 0 ? metadataContainers : undefined,
              keepAssets,
@@ -77,10 +88,21 @@ index 23177462758f6ae66a10b7476f4237ef5f8fe699..e01285b8fbf1872c90860512e9d5db76
  
  // ---------------------------------------------------------------------------
 diff --git a/src/Cloudflare/Workers/WorkerProvider.ts b/src/Cloudflare/Workers/WorkerProvider.ts
-index ac4b5508499e089a7a7a4b92fb3a5159a634e49d..dd20f8face9ccde019d126c095736603f362af64 100644
+index ac4b5508499e089a7a7a4b92fb3a5159a634e49d..b92edbc485002a522c8b068aee26f24d27363010 100644
 --- a/src/Cloudflare/Workers/WorkerProvider.ts
 +++ b/src/Cloudflare/Workers/WorkerProvider.ts
-@@ -1506,7 +1506,10 @@ export const LiveWorkerProvider = () =>
+@@ -1295,7 +1295,9 @@ export const LiveWorkerProvider = () =>
+         // Add environment variables as metadata bindings
+         if (news.env) {
+           for (const [key, value] of Object.entries(news.env)) {
+-            if (value === undefined) continue;
++            // An unset optional secret can arrive as null once resolved; skip
++            // it too, or it becomes a null json binding over the kept secret.
++            if (value === undefined || value === null) continue;
+             if (metadataBindings.some((b) => b.name === key)) continue;
+             if (Redacted.isRedacted(value)) {
+               const unredacted = Redacted.value(value);
+@@ -1506,7 +1508,10 @@ export const LiveWorkerProvider = () =>
            containers:
              metadataContainers.length > 0 ? metadataContainers : undefined,
            keepAssets,
