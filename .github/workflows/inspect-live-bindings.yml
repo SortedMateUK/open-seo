@@ -51,8 +51,6 @@ jobs:
             for id in $ids; do
               v=$(get "$api/$w/versions/$id")
               echo "  version $id  #$(echo "$v" | jq -r '.result.number')  created $(echo "$v" | jq -r '.result.metadata.created_on')  source $(echo "$v" | jq -r '.result.metadata.source')"
-              echo "$v" | jq -r '.result.resources.bindings[]? | "    \(.type)\t\(.name)"' | sort
+              echo "$v" | show_bindings
             done
           done
-          echo "=================== plain values on the newest 29-Sep-era versions"
-          echo "(printed above under each version only as type + name; plain values appear under 'settings')"
