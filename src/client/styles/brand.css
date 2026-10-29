@@ -2,9 +2,11 @@
  *
  * Loaded after app.css (see src/routes/__root.tsx) and deliberately kept out
  * of it: upstream owns app.css, this file is ours, so upstream merges never
- * conflict here. It overrides the daisyUI theme variables that the two
- * upstream themes define ("openseo" / "openseo-dark" stay as internal ids —
- * nobody sees them) with the SortedMate tokens from the main app's index.css.
+ * conflict here. It overrides the shadcn theme variables that the two
+ * upstream themes define in app.css ("openseo" / "openseo-dark" stay as
+ * internal ids, nobody sees them) with the SortedMate tokens from the main
+ * app's index.css. Upstream moved from daisyUI to these variables after
+ * v0.1.7; src/shared/brand.test.ts fails if a release renames them again.
  *
  * Industrial-Modern | Black & Yellow | Bold & Confident.
  */
@@ -35,71 +37,80 @@ samp {
   color: #000000;
 }
 
-/* Light — clean paper with yellow accents. */
+/* Light: clean paper, with Electric Yellow (#ffd000) for the main action. */
 html[data-theme="openseo"] {
-  --color-base-100: #ffffff; /* content panel / card */
-  --color-base-200: #fafafa; /* page + sidebar (--background) */
-  --color-base-300: hsl(40 6% 85%); /* borders, warm grey (--border) */
-  --color-base-content: #141414; /* --foreground */
-  --color-primary: #ffd000; /* Electric Yellow */
-  --color-primary-content: #000000;
-  --color-secondary: hsl(40 6% 90%);
-  --color-secondary-content: hsl(0 0% 15%);
-  --color-accent: #ffd000;
-  --color-accent-content: #000000;
-  --color-neutral: #141414; /* industrial black */
-  --color-neutral-content: #ffffff;
-  --color-info: hsl(217 78% 42%);
-  --color-info-content: #ffffff;
-  --color-success: hsl(142 71% 45%);
-  --color-success-content: #ffffff;
-  --color-warning: hsl(38 92% 50%);
-  --color-warning-content: #000000;
-  --color-error: hsl(0 72% 51%);
-  --color-error-content: #ffffff;
-  --radius-selector: 0.625rem; /* 10px (--radius) */
-  --radius-field: 0.625rem;
-  --radius-box: 0.75rem;
-  --depth: 1; /* daisyUI's subtle 3D on buttons/cards — the "mechanical" feel */
+  --radius: 0.625rem;
+  --background: #fafafa;
+  --foreground: #141414;
+  --card: #ffffff;
+  --card-foreground: #141414;
+  --popover: #ffffff;
+  --popover-foreground: #141414;
+  --primary: #ffd000;
+  --primary-foreground: #000000;
+  --secondary: hsl(40 6% 90%);
+  --secondary-foreground: hsl(0 0% 15%);
+  --muted: hsl(40 4% 93%);
+  --muted-foreground: hsl(0 0% 40%);
+  --accent: hsl(40 6% 92%);
+  --accent-foreground: #141414;
+  --destructive: hsl(0 72% 51%);
+  --success: hsl(142 71% 45%);
+  --success-foreground: #ffffff;
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: #000000;
+  --border: hsl(40 6% 85%);
+  --input: hsl(40 6% 78%);
+  --ring: hsl(46 100% 40%);
+  --sidebar: hsl(40 6% 94%);
+  --sidebar-foreground: #141414;
+  --sidebar-primary: #ffd000;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: hsl(0 0% 8% / 7%);
+  --sidebar-accent-foreground: #141414;
+  --sidebar-border: hsl(40 6% 85%);
+  --sidebar-ring: hsl(46 100% 40%);
 }
 
-/* Dark — tarmac black, yellow stays electric. */
+/* Dark: tarmac black, yellow stays electric. */
 html[data-theme="openseo-dark"] {
-  --color-base-100: #171717; /* content panel / card */
-  --color-base-200: #0f0f0f; /* page + sidebar (--background) */
-  --color-base-300: hsl(0 0% 18%); /* --border */
-  --color-base-content: hsl(0 0% 96%); /* --foreground */
-  --color-primary: #ffd000;
-  --color-primary-content: #000000;
-  --color-secondary: hsl(0 0% 14%);
-  --color-secondary-content: hsl(0 0% 90%);
-  --color-accent: #ffd000;
-  --color-accent-content: #000000;
-  --color-neutral: hsl(0 0% 90%);
-  --color-neutral-content: #141414;
-  --color-info: hsl(213 90% 70%);
-  --color-info-content: hsl(0 0% 8%);
-  --color-success: hsl(142 64% 52%);
-  --color-success-content: hsl(0 0% 8%);
-  --color-warning: hsl(38 95% 58%);
-  --color-warning-content: hsl(0 0% 8%);
-  --color-error: hsl(0 72% 55%);
-  --color-error-content: #ffffff;
-  --radius-selector: 0.625rem;
-  --radius-field: 0.625rem;
-  --radius-box: 0.75rem;
-  --depth: 1;
+  --radius: 0.625rem;
+  --background: #0f0f0f;
+  --foreground: hsl(0 0% 96%);
+  --card: #171717;
+  --card-foreground: hsl(0 0% 96%);
+  --popover: #1c1c1c;
+  --popover-foreground: hsl(0 0% 96%);
+  --primary: #ffd000;
+  --primary-foreground: #000000;
+  --secondary: hsl(0 0% 14%);
+  --secondary-foreground: hsl(0 0% 90%);
+  --muted: hsl(0 0% 16%);
+  --muted-foreground: hsl(0 0% 60%);
+  --accent: hsl(0 0% 16%);
+  --accent-foreground: hsl(0 0% 96%);
+  --destructive: hsl(0 72% 55%);
+  --success: hsl(142 64% 52%);
+  --success-foreground: hsl(0 0% 8%);
+  --warning: hsl(38 95% 58%);
+  --warning-foreground: hsl(0 0% 8%);
+  --border: hsl(0 0% 18%);
+  --input: hsl(0 0% 26%);
+  --ring: #ffd000;
+  --sidebar: #141414;
+  --sidebar-foreground: hsl(0 0% 96%);
+  --sidebar-primary: #ffd000;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: hsl(0 0% 100% / 7%);
+  --sidebar-accent-foreground: hsl(0 0% 96%);
+  --sidebar-border: hsl(0 0% 18%);
+  --sidebar-ring: #ffd000;
 }
 
 /* Brand yellow is ~1.4:1 on white, so it is a fill colour, not a text colour.
- * Text and link utilities that read `primary` get an AA-safe hard-hat amber
- * in light mode; fills (btn, badge, bg, border) stay electric yellow.
+ * Text that reads `primary` gets an AA-safe hard-hat amber in light mode;
+ * fills (buttons, badges, backgrounds, borders) stay electric yellow.
  * Dark mode needs nothing: #ffd000 on #0f0f0f is ~13:1. */
-html[data-theme="openseo"] .text-primary,
-html[data-theme="openseo"] .link-primary {
+html[data-theme="openseo"] .text-primary {
   color: hsl(46 100% 27%);
-}
-
-html[data-theme="openseo"] .link-primary:hover {
-  color: hsl(46 100% 20%);
 }

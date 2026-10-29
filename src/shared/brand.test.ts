@@ -31,6 +31,11 @@ function isComment(line: string): boolean {
   );
 }
 
+/** The declarations of the first rule whose selector starts at `selector`. */
+function ruleBody(css: string, selector: string): string {
+  return css.slice(css.indexOf(selector)).split("}")[0] ?? "";
+}
+
 describe("portal branding", () => {
   it("has no upstream product name in user-visible portal source", () => {
     const hits = portalSourceFiles().flatMap((file) =>
@@ -50,5 +55,26 @@ describe("portal branding", () => {
     );
 
     expect(manifest).toMatchObject({ name: APP_NAME, short_name: APP_NAME });
+  });
+
+  it("recolours the variables upstream's themes actually use", () => {
+    // Upstream has swapped theme systems before (daisyUI to shadcn); if it
+    // renames these again the brand layer silently stops applying.
+    const appCss = readFileSync(
+      join(REPO_ROOT, "src/client/styles/app.css"),
+      "utf8",
+    );
+    const brandCss = readFileSync(
+      join(REPO_ROOT, "src/client/styles/brand.css"),
+      "utf8",
+    );
+    for (const theme of ["openseo", "openseo-dark"]) {
+      const upstream = ruleBody(appCss, `[data-theme="${theme}"]`);
+      const ours = ruleBody(brandCss, `html[data-theme="${theme}"]`);
+      for (const name of ["--primary", "--background", "--foreground"]) {
+        expect(upstream).toContain(`${name}:`);
+        expect(ours).toContain(`${name}:`);
+      }
+    }
   });
 });
