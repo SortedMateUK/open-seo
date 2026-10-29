@@ -21,6 +21,11 @@ name: Deploy self-host
 
 on:
   workflow_dispatch:
+    inputs:
+      force:
+        description: Upload every resource even if alchemy sees no change (after Restore self-host secrets)
+        type: boolean
+        default: false
 
 # One deploy at a time; a queued push waits rather than racing alchemy state.
 concurrency:
@@ -94,7 +99,7 @@ jobs:
         run: node scripts/selfhost-secrets-guard.mjs snapshot
 
       - name: Deploy self-host stage
-        run: pnpm deploy:selfhost --yes
+        run: pnpm deploy:selfhost --yes ${{ inputs.force && '--force' || '' }}
 
       - name: Check no live secret was lost
         run: node scripts/selfhost-secrets-guard.mjs verify
