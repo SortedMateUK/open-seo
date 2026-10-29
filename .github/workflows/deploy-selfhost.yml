@@ -98,8 +98,12 @@ jobs:
       - name: Snapshot live secret names
         run: node scripts/selfhost-secrets-guard.mjs snapshot
 
+      # The patched alchemy carries each snapshotted secret the env file
+      # doesn't set over by name, and the upload fails rather than drop one.
       - name: Deploy self-host stage
         run: pnpm deploy:selfhost --yes ${{ inputs.force && '--force' || '' }}
+        env:
+          ALCHEMY_KEEP_SECRETS_FILE: ${{ github.workspace }}/.selfhost-secrets-before.json
 
       - name: Check no live secret was lost
         run: node scripts/selfhost-secrets-guard.mjs verify
