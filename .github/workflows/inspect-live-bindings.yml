@@ -37,7 +37,13 @@ jobs:
               | "    \(.type)\t\(.name)\t" + (
                   if (.type == "plain_text" or .type == "json") and (.name | test($hide; "i") | not)
                   then ((.text // (.json | tostring)) // "")
-                  elif .type == "plain_text" or .type == "json" then "(hidden by name)"
+                  elif .type == "json" then
+                    ((.json | type) as $t
+                      | "(json " + $t
+                        + (if $t == "string" then ", length \(.json|length), is \"<redacted>\": \(.json == "<redacted>")"
+                           elif $t == "object" then ", keys \(.json|keys|join("/"))"
+                           else "" end) + ")")
+                  elif .type == "plain_text" then "(hidden by name)"
                   else "" end)' | sort
           }
           for w in open-seo-selfhost open-seo-selfhost-audit; do
@@ -49,7 +55,7 @@ jobs:
             echo "--- settings (what a new upload would inherit)"
             get "$api/$w/settings" | show_bindings
             echo "--- versions (newest first)"
-            ids=$(get "$api/$w/versions?deployable=true" | jq -r '.result.items[0:8][]? | "\(.id)"')
+            ids=$(get "$api/$w/versions?deployable=true" | jq -r '.result.items[0:3][]? | "\(.id)"')
             for id in $ids; do
               v=$(get "$api/$w/versions/$id")
               echo "  version $id  #$(echo "$v" | jq -r '.result.number')  created $(echo "$v" | jq -r '.result.metadata.created_on')  source $(echo "$v" | jq -r '.result.metadata.source')"
