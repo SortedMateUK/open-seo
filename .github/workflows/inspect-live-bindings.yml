@@ -1,0 +1,58 @@
+name: Inspect live bindings (read only)
+
+# Read only. Lists what the live self-host Workers hold, so a redeploy can be
+# checked against it: the active deployment, every recent version, and for each
+# the binding NAMES and TYPES. Plain-text values are printed (client ids, URLs,
+# model names), except any binding whose name looks secret. Secret values are
+# never returned by Cloudflare. Makes GET requests only.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: github.repository == 'SortedMateUK/open-seo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Inspect
+        run: |
+          set -u
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts"
+          get() { curl -sS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$1"; }
+          # Names that must never be echoed, whatever their binding type.
+          hide='SECRET|KEY|TOKEN|PASSWORD|JWK'
+          show_bindings() {
+            jq -r --arg hide "$hide" '
+              (.. | objects | select(has("bindings")) | .bindings)? // empty
+              | .[]
+              | "    \(.type)\t\(.name)\t" + (
+                  if (.type == "plain_text" or .type == "json") and (.name | test($hide; "i") | not)
+                  then ((.text // (.json | tostring)) // "")
+                  elif .type == "plain_text" or .type == "json" then "(hidden by name)"
+                  else "" end)' | sort
+          }
+          for w in open-seo-selfhost open-seo-selfhost-audit; do
+            echo "=================== $w"
+            echo "--- active deployment"
+            get "$api/$w/deployments" | jq -r '.result.deployments[0:3][]? | "  \(.created_on)  \(.source)  \(.versions|map("\(.version_id) \(.percentage)%")|join(", "))"'
+            echo "--- secret names on the script"
+            get "$api/$w/secrets" | jq -r '.result[]? | "  \(.name)"' | sort
+            echo "--- settings (what a new upload would inherit)"
+            get "$api/$w/settings" | show_bindings
+            echo "--- versions (newest first)"
+            ids=$(get "$api/$w/versions?deployable=true" | jq -r '.result.items[0:8][]? | "\(.id)"')
+            for id in $ids; do
+              v=$(get "$api/$w/versions/$id")
+              echo "  version $id  #$(echo "$v" | jq -r '.result.number')  created $(echo "$v" | jq -r '.result.metadata.created_on')  source $(echo "$v" | jq -r '.result.metadata.source')"
+              echo "$v" | jq -r '.result.resources.bindings[]? | "    \(.type)\t\(.name)"' | sort
+            done
+          done
+          echo "=================== plain values on the newest 29-Sep-era versions"
+          echo "(printed above under each version only as type + name; plain values appear under 'settings')"
