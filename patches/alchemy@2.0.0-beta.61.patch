@@ -1,0 +1,94 @@
+diff --git a/lib/Cloudflare/Access/Application.js b/lib/Cloudflare/Access/Application.js
+index c8ab1322347095c9f7cfda63c382c0b6ad17775d..e8c09628292fa1f6d6c640835067a8a1b8caf137 100644
+--- a/lib/Cloudflare/Access/Application.js
++++ b/lib/Cloudflare/Access/Application.js
+@@ -235,6 +235,10 @@ export const ApplicationProvider = () => Provider.succeed(Application, {
+                 destinations: body.destinations === undefined
+                     ? undefined
+                     : Array.from(body.destinations),
++                // Cloudflare's PUT replaces the whole application, so carry
++                // Managed OAuth (unmanaged here, set in the dashboard) through
++                // unchanged rather than erasing it on every update.
++                oauthConfiguration: observed.oauthConfiguration,
+             })
+                 // A just-added policy reference may still be propagating, or the
+                 // call may be throttled (403) — ride out both.
+@@ -366,6 +370,7 @@ const narrowApp = (raw) => ({
+         : raw.policies,
+     createdAt: undef(raw.createdAt),
+     updatedAt: undef(raw.updatedAt),
++    oauthConfiguration: undef(raw.oauthConfiguration),
+ });
+ const policyIdOf = (p) => typeof p === "string" ? p : p.id;
+ const toRequestPolicy = (p) => {
+diff --git a/lib/Cloudflare/Workers/WorkerProvider.js b/lib/Cloudflare/Workers/WorkerProvider.js
+index 5c4c4555cbbe92330341c470079addd7af5e94cb..f513e55992d961fde70c29ca16453e0f868104a3 100644
+--- a/lib/Cloudflare/Workers/WorkerProvider.js
++++ b/lib/Cloudflare/Workers/WorkerProvider.js
+@@ -1059,7 +1059,10 @@ export const LiveWorkerProvider = () => Provider.effect(Worker, Effect.gen(funct
+             compatibilityFlags: compatibility.flags,
+             containers: metadataContainers.length > 0 ? metadataContainers : undefined,
+             keepAssets,
+-            keepBindings: undefined,
++            // Keep secrets this deploy doesn't send (the env file omits them), so a
++            // partial env file can't wipe the live Worker's secrets. A sent secret
++            // still replaces the kept one.
++            keepBindings: ["secret_text"],
+             limits: news.limits,
+             logpush: news.logpush,
+             mainModule: bundle.main,
+diff --git a/src/Cloudflare/Access/Application.ts b/src/Cloudflare/Access/Application.ts
+index 23177462758f6ae66a10b7476f4237ef5f8fe699..e01285b8fbf1872c90860512e9d5db7629ea2ed9 100644
+--- a/src/Cloudflare/Access/Application.ts
++++ b/src/Cloudflare/Access/Application.ts
+@@ -455,6 +455,10 @@ export const ApplicationProvider = () =>
+               body.destinations === undefined
+                 ? undefined
+                 : Array.from(body.destinations),
++            // Cloudflare's PUT replaces the whole application, so carry
++            // Managed OAuth (unmanaged here, set in the dashboard) through
++            // unchanged rather than erasing it on every update.
++            oauthConfiguration: observed.oauthConfiguration,
+           })
+           // A just-added policy reference may still be propagating, or the
+           // call may be throttled (403) — ride out both.
+@@ -637,6 +641,7 @@ interface ObservedApp {
+   readonly policies?: ReadonlyArray<ObservedPolicy>;
+   readonly createdAt?: string;
+   readonly updatedAt?: string;
++  readonly oauthConfiguration?: zeroTrust.UpdateAccessApplicationForAccountRequest["oauthConfiguration"];
+ }
+ 
+ const undef = <T>(v: T | null | undefined): T | undefined =>
+@@ -662,6 +667,7 @@ const narrowApp = (raw: {
+   policies?: ReadonlyArray<unknown> | null;
+   createdAt?: string | null;
+   updatedAt?: string | null;
++  oauthConfiguration?: ObservedApp["oauthConfiguration"] | null;
+ }): ObservedApp => ({
+   id: undef(raw.id),
+   aud: undef(raw.aud),
+@@ -683,6 +689,7 @@ const narrowApp = (raw: {
+       : (raw.policies as ReadonlyArray<ObservedPolicy>),
+   createdAt: undef(raw.createdAt),
+   updatedAt: undef(raw.updatedAt),
++  oauthConfiguration: undef(raw.oauthConfiguration),
+ });
+ 
+ // ---------------------------------------------------------------------------
+diff --git a/src/Cloudflare/Workers/WorkerProvider.ts b/src/Cloudflare/Workers/WorkerProvider.ts
+index ac4b5508499e089a7a7a4b92fb3a5159a634e49d..dd20f8face9ccde019d126c095736603f362af64 100644
+--- a/src/Cloudflare/Workers/WorkerProvider.ts
++++ b/src/Cloudflare/Workers/WorkerProvider.ts
+@@ -1506,7 +1506,10 @@ export const LiveWorkerProvider = () =>
+           containers:
+             metadataContainers.length > 0 ? metadataContainers : undefined,
+           keepAssets,
+-          keepBindings: undefined,
++          // Keep secrets this deploy doesn't send (the env file omits them), so a
++          // partial env file can't wipe the live Worker's secrets. A sent secret
++          // still replaces the kept one.
++          keepBindings: ["secret_text"],
+           limits: news.limits,
+           logpush: news.logpush,
+           mainModule: bundle.main,

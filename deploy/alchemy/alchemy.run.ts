@@ -144,8 +144,17 @@ const optionalVar = (name: string) =>
     Config.map((value) => value.trim()),
   );
 
+// An unset optional secret is left out of the deploy (undefined skips the
+// binding) rather than sent as "", and the patched alchemy keeps secrets a
+// deploy doesn't send — so a secret missing from the env file keeps its live
+// value instead of being blanked. To clear one, delete it in the dashboard.
 const optionalSecret = (name: string) =>
-  Config.redacted(name).pipe(Config.withDefault(Redacted.make("")));
+  Config.redacted(name).pipe(
+    Config.map((value) =>
+      Redacted.value(value).trim() === "" ? undefined : value,
+    ),
+    Config.withDefault(undefined),
+  );
 
 const accessScopeHint =
   " (if this is a permissions error, re-run `pnpm alchemy login --configure`, answer yes to “Customize OAuth scopes?”, and select access:write alongside the defaults)";
@@ -383,7 +392,7 @@ export default Alchemy.Stack(
     // keep every session valid. An explicit BETTER_AUTH_SECRET always wins.
     const configuredAuthSecret = yield* dataEnv.BETTER_AUTH_SECRET;
     const betterAuthSecret =
-      authMode === "password" && !Redacted.value(configuredAuthSecret)
+      authMode === "password" && !configuredAuthSecret
         ? yield* Alchemy.makeRandom("BetterAuthSecret")
         : configuredAuthSecret;
     // Operator account commands (`pnpm selfhost:admin`: password resets,
@@ -507,8 +516,8 @@ export default Alchemy.Stack(
         AUTH_MODE: authMode,
         DATABASE_PROVIDER: databaseProvider || "d1",
         BETTER_AUTH_URL: authUrl,
-        BETTER_AUTH_SECRET: betterAuthSecret,
-        ...(authMode === "password" && Redacted.value(operatorSecret)
+        ...(betterAuthSecret ? { BETTER_AUTH_SECRET: betterAuthSecret } : {}),
+        ...(authMode === "password" && operatorSecret
           ? { OPENSEO_OPERATOR_SECRET: operatorSecret }
           : {}),
         // The audit worker above always binds BROWSER; the app worker checks
