@@ -61,12 +61,41 @@ const secretNamesOf = async (worker, versionId) => {
     .sort();
 };
 
-const placeholder = `export default {
-  fetch() {
-    return new Response("Secrets carrier version, not for traffic", { status: 503 });
-  },
+// Cloudflare rejects a version that drops a Durable Object or Workflow class
+// the Worker implements, so the placeholder exports a stub of each one.
+const classesOf = async (worker) => {
+  const namespaces = await api(
+    "GET",
+    "/workers/durable_objects/namespaces?per_page=1000",
+  );
+  const workflows = await api("GET", "/workflows?per_page=100");
+  return {
+    durableObjects: namespaces
+      .filter((namespace) => namespace.script === worker)
+      .map((namespace) => namespace.class),
+    workflows: workflows
+      .filter((workflow) => workflow.script_name === worker)
+      .map((workflow) => workflow.class_name),
+  };
 };
-`;
+
+const placeholderFor = ({ durableObjects, workflows }) =>
+  [
+    `import { DurableObject, WorkflowEntrypoint } from "cloudflare:workers";`,
+    ...durableObjects.map(
+      (name) => `export class ${name} extends DurableObject {}`,
+    ),
+    ...workflows.map(
+      (name) =>
+        `export class ${name} extends WorkflowEntrypoint { async run() { throw new Error("secrets carrier"); } }`,
+    ),
+    `export default {`,
+    `  fetch() {`,
+    `    return new Response("Secrets carrier version, not for traffic", { status: 503 });`,
+    `  },`,
+    `};`,
+    ``,
+  ].join("\n");
 
 const liveVersions = async (worker) => {
   const { deployments } = await api(
@@ -86,6 +115,11 @@ for (const [worker, sourceVersion] of targets) {
     `${worker}: copying ${names.length} secrets from ${sourceVersion}: ${names.join(", ")}`,
   );
 
+  const classes = await classesOf(worker);
+  console.log(
+    `${worker}: stubbing classes ${[...classes.durableObjects, ...classes.workflows].join(", ") || "(none)"}`,
+  );
+
   // No `deploy` flag: the version is uploaded but serves no traffic.
   const created = await api("POST", `/workers/workers/${worker}/versions`, {
     main_module: "carrier.mjs",
@@ -93,7 +127,7 @@ for (const [worker, sourceVersion] of targets) {
       {
         name: "carrier.mjs",
         content_type: "application/javascript+module",
-        content_base64: Buffer.from(placeholder).toString("base64"),
+        content_base64: Buffer.from(placeholderFor(classes)).toString("base64"),
       },
     ],
     compatibility_date: "2025-09-02",
