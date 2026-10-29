@@ -12,7 +12,9 @@ name: Deploy self-host
 # Required repo secrets (Settings → Secrets and variables → Actions):
 #   CLOUDFLARE_API_TOKEN   Workers Scripts / KV / D1 / R2 / Workflows write,
 #                          Access: Apps and Policies write (the managed login
-#                          gate), Secrets Store read, Account Settings read.
+#                          gate), Access: Organizations read, Secrets Store
+#                          edit (alchemy binds its state-store token from it),
+#                          Account Settings read.
 #   CLOUDFLARE_ACCOUNT_ID  32-hex account id (Workers & Pages → Account details).
 #   ENV_SELFHOST           Full contents of .env.selfhost — DATAFORSEO_API_KEY,
 #                          ACCESS_ALLOWED_EMAILS, plus any optional extras.
@@ -86,5 +88,13 @@ jobs:
 
       # Same command as a local self-host deploy: preflight, vite build,
       # tsc, alchemy deploy --stage selfhost.
+      # Record the live Workers' secret names, so the check after the deploy
+      # can prove none of them was blanked (names only, never values).
+      - name: Snapshot live secret names
+        run: node scripts/selfhost-secrets-guard.mjs snapshot
+
       - name: Deploy self-host stage
         run: pnpm deploy:selfhost --yes
+
+      - name: Check no live secret was lost
+        run: node scripts/selfhost-secrets-guard.mjs verify
