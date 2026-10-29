@@ -1,0 +1,116 @@
+/* SortedMate SEO brand layer.
+ *
+ * Loaded after app.css (see src/routes/__root.tsx) and deliberately kept out
+ * of it: upstream owns app.css, this file is ours, so upstream merges never
+ * conflict here. It overrides the shadcn theme variables that the two
+ * upstream themes define in app.css ("openseo" / "openseo-dark" stay as
+ * internal ids, nobody sees them) with the SortedMate tokens from the main
+ * app's index.css. Upstream moved from daisyUI to these variables after
+ * v0.1.7; src/shared/brand.test.ts fails if a release renames them again.
+ *
+ * Industrial-Modern | Black & Yellow | Bold & Confident.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* Typography — DM Sans for everything, JetBrains Mono for data and code. */
+:root {
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: #ffd000;
+  color: #000000;
+}
+
+/* Light: clean paper, with Electric Yellow (#ffd000) for the main action. */
+html[data-theme="openseo"] {
+  --radius: 0.625rem;
+  --background: #fafafa;
+  --foreground: #141414;
+  --card: #ffffff;
+  --card-foreground: #141414;
+  --popover: #ffffff;
+  --popover-foreground: #141414;
+  --primary: #ffd000;
+  --primary-foreground: #000000;
+  --secondary: hsl(40 6% 90%);
+  --secondary-foreground: hsl(0 0% 15%);
+  --muted: hsl(40 4% 93%);
+  --muted-foreground: hsl(0 0% 40%);
+  --accent: hsl(40 6% 92%);
+  --accent-foreground: #141414;
+  --destructive: hsl(0 72% 51%);
+  --success: hsl(142 71% 45%);
+  --success-foreground: #ffffff;
+  --warning: hsl(38 92% 50%);
+  --warning-foreground: #000000;
+  --border: hsl(40 6% 85%);
+  --input: hsl(40 6% 78%);
+  --ring: hsl(46 100% 40%);
+  --sidebar: hsl(40 6% 94%);
+  --sidebar-foreground: #141414;
+  --sidebar-primary: #ffd000;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: hsl(0 0% 8% / 7%);
+  --sidebar-accent-foreground: #141414;
+  --sidebar-border: hsl(40 6% 85%);
+  --sidebar-ring: hsl(46 100% 40%);
+}
+
+/* Dark: tarmac black, yellow stays electric. */
+html[data-theme="openseo-dark"] {
+  --radius: 0.625rem;
+  --background: #0f0f0f;
+  --foreground: hsl(0 0% 96%);
+  --card: #171717;
+  --card-foreground: hsl(0 0% 96%);
+  --popover: #1c1c1c;
+  --popover-foreground: hsl(0 0% 96%);
+  --primary: #ffd000;
+  --primary-foreground: #000000;
+  --secondary: hsl(0 0% 14%);
+  --secondary-foreground: hsl(0 0% 90%);
+  --muted: hsl(0 0% 16%);
+  --muted-foreground: hsl(0 0% 60%);
+  --accent: hsl(0 0% 16%);
+  --accent-foreground: hsl(0 0% 96%);
+  --destructive: hsl(0 72% 55%);
+  --success: hsl(142 64% 52%);
+  --success-foreground: hsl(0 0% 8%);
+  --warning: hsl(38 95% 58%);
+  --warning-foreground: hsl(0 0% 8%);
+  --border: hsl(0 0% 18%);
+  --input: hsl(0 0% 26%);
+  --ring: #ffd000;
+  --sidebar: #141414;
+  --sidebar-foreground: hsl(0 0% 96%);
+  --sidebar-primary: #ffd000;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: hsl(0 0% 100% / 7%);
+  --sidebar-accent-foreground: hsl(0 0% 96%);
+  --sidebar-border: hsl(0 0% 18%);
+  --sidebar-ring: #ffd000;
+}
+
+/* Brand yellow is ~1.4:1 on white, so it is a fill colour, not a text colour.
+ * Text that reads `primary` gets an AA-safe hard-hat amber in light mode;
+ * fills (buttons, badges, backgrounds, borders) stay electric yellow.
+ * Dark mode needs nothing: #ffd000 on #0f0f0f is ~13:1. */
+html[data-theme="openseo"] .text-primary {
+  color: hsl(46 100% 27%);
+}

@@ -20,6 +20,7 @@ import {
 } from "@/server/mcp/context";
 import { getPublicOrigin } from "@/server/mcp/public-origin";
 import { createOpenSeoMcpServer } from "@/server/mcp/server";
+import { supportsMcpApps } from "@/server/mcp/ui-capabilities";
 import { AuthRepository } from "@/server/auth/repositories/AuthRepository";
 
 // Mirrors the agents SDK's DEFAULT_CORS_OPTIONS so legacy responses carry the
@@ -76,7 +77,11 @@ function validateLegacyRequest(
   return originRejection ? withMcpCors(originRejection) : undefined;
 }
 
-async function handleLegacyJsonRequest(request: Request, props: McpProps) {
+async function handleLegacyJsonRequest(
+  request: Request,
+  props: McpProps,
+  supportsApps: boolean,
+) {
   if (request.method !== "POST") {
     return withMcpCors(
       Response.json(
@@ -98,7 +103,7 @@ async function handleLegacyJsonRequest(request: Request, props: McpProps) {
   // before the request completes. JSON mode silently drops server-to-client
   // requests (sampling/elicitation) and would hang the buffered response —
   // no OpenSEO tool issues them.
-  const server = createOpenSeoMcpServer(props);
+  const server = createOpenSeoMcpServer(props, supportsApps);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -123,19 +128,23 @@ async function handleLegacyJsonRequest(request: Request, props: McpProps) {
 // way.
 function createRequestHandler(
   props: McpProps,
+  supportsApps: boolean,
   allowedOriginHostnames?: string[],
 ) {
-  const modernHandler = createMcpHandler(() => createOpenSeoMcpServer(props), {
-    route: MCP_ROUTE,
-    allowedOriginHostnames,
-    legacy: "reject",
-    // MCP serving is strictly stateless: no notification is ever published,
-    // so refuse subscriptions/listen outright (in-band -32603 before the
-    // ack). The SSE streams it would otherwise hold open pin isolates for
-    // hours and turn every isolate death into a burst of exceededMemory
-    // request outcomes (EVE-95).
-    maxSubscriptions: 0,
-  });
+  const modernHandler = createMcpHandler(
+    () => createOpenSeoMcpServer(props, supportsApps),
+    {
+      route: MCP_ROUTE,
+      allowedOriginHostnames,
+      legacy: "reject",
+      // MCP serving is strictly stateless: no notification is ever published,
+      // so refuse subscriptions/listen outright (in-band -32603 before the
+      // ack). The SSE streams it would otherwise hold open pin isolates for
+      // hours and turn every isolate death into a burst of exceededMemory
+      // request outcomes (EVE-95).
+      maxSubscriptions: 0,
+    },
+  );
 
   return async (request: Request, env: unknown, ctx: ExecutionContext) => {
     if (request.method === "OPTIONS") {
@@ -149,7 +158,7 @@ function createRequestHandler(
     }
 
     const rejection = validateLegacyRequest(request, allowedOriginHostnames);
-    return rejection ?? handleLegacyJsonRequest(request, props);
+    return rejection ?? handleLegacyJsonRequest(request, props, supportsApps);
   };
 }
 
@@ -177,10 +186,13 @@ export async function handleAuthenticatedOpenSeoMcpRequest(
     return withMcpCors(new Response("Invalid Origin", { status: 403 }));
   }
 
-  // Tokens snapshot organizationId at consent and refresh copies it verbatim,
-  // so the grant can outlive the membership (member removed, org changed).
-  // Re-check the member row per request; 401 invalid_token pushes compliant
-  // clients back through OAuth, where consent stamps their current org.
+  // A hosted credential is bound to the organization that was active when it
+  // was created (OAuth: at consent; API key: at creation) and stays bound for
+  // its lifetime. The grant can outlive the membership (member removed), so
+  // require a live member row in exactly that org on every request: once it
+  // is gone the credential is dead, with no fallback to another org. The 401
+  // pushes compliant clients back through OAuth, and the new grant binds to
+  // whichever org is active at that consent.
   const authContext = result.data[MCP_AUTH_CONTEXT_PROP];
   const membership = await AuthRepository.getMembership(
     authContext.userId,
@@ -201,8 +213,12 @@ export async function handleAuthenticatedOpenSeoMcpRequest(
   const requestProps = createWorkersOAuthMcpProps({
     ...authContext,
     role: membership.role,
+    // The only per-request client signal that reaches a tools/call: initialize's
+    // clientInfo is long gone by then and this transport never populates
+    // ServerContext.http.req. Display only (report attribution).
+    userAgent: request.headers.get("user-agent") ?? undefined,
   });
-  return createRequestHandler(requestProps, [
+  return createRequestHandler(requestProps, await supportsMcpApps(request), [
     hostedUrl.hostname,
     SURFMIND_CHROME_EXTENSION_HOSTNAME,
   ])(request, env, ctx);
@@ -228,7 +244,12 @@ export async function handleSelfHostedOpenSeoMcpRequest(
     userEmail: identity.userEmail,
     organizationId: identity.organizationId,
     baseUrl: getPublicOrigin(request),
+    userAgent: request.headers.get("user-agent") ?? undefined,
   });
 
-  return createRequestHandler(props)(request, env, ctx);
+  return createRequestHandler(props, await supportsMcpApps(request))(
+    request,
+    env,
+    ctx,
+  );
 }

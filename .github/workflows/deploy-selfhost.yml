@@ -1,0 +1,90 @@
+name: Deploy self-host
+
+# Deploys the SortedMate SEO self-host stage to Cloudflare from GitHub, so a
+# manual run (Actions → Deploy self-host → Run workflow) is the whole release
+# process — no Codespace or laptop holds the deploy credentials. It is manual
+# only: merging an upstream release must not redeploy the live install by
+# itself. Same CI recipe as pr-preview.yml:
+# in CI alchemy reads CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID from the
+# environment and resolves its state-store token from the account Secrets
+# Store on every run (docs/PREVIEW_DEPLOYMENTS.md).
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   Workers Scripts / KV / D1 / R2 / Workflows write,
+#                          Access: Apps and Policies write (the managed login
+#                          gate), Secrets Store read, Account Settings read.
+#   CLOUDFLARE_ACCOUNT_ID  32-hex account id (Workers & Pages → Account details).
+#   ENV_SELFHOST           Full contents of .env.selfhost — DATAFORSEO_API_KEY,
+#                          ACCESS_ALLOWED_EMAILS, plus any optional extras.
+
+on:
+  workflow_dispatch:
+
+# One deploy at a time; a queued push waits rather than racing alchemy state.
+concurrency:
+  group: deploy-selfhost
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  deploy:
+    # Only this fork deploys; a fork of the fork stays inert.
+    if: github.repository == 'SortedMateUK/open-seo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Fail in seconds, not after a minute of build, when a secret is missing.
+      - name: Check deploy secrets
+        env:
+          ENV_SELFHOST: ${{ secrets.ENV_SELFHOST }}
+        run: |
+          missing=0
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID ENV_SELFHOST; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repo secret $name is not set (Settings → Secrets and variables → Actions)"
+              missing=1
+            fi
+          done
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            case "$CLOUDFLARE_ACCOUNT_ID" in
+              *[!0-9a-fA-F]*) bad=1 ;;
+            esac
+            [ "${#CLOUDFLARE_ACCOUNT_ID}" -eq 32 ] || bad=1
+            if [ "${bad:-0}" -eq 1 ]; then
+              echo "::error::CLOUDFLARE_ACCOUNT_ID must be exactly 32 hex characters (Workers & Pages → Account details)"
+              missing=1
+            fi
+          fi
+          exit $missing
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Write .env.selfhost
+        run: printf '%s\n' "$ENV_SELFHOST" > .env.selfhost
+        env:
+          ENV_SELFHOST: ${{ secrets.ENV_SELFHOST }}
+
+      # Same command as a local self-host deploy: preflight, vite build,
+      # tsc, alchemy deploy --stage selfhost.
+      - name: Deploy self-host stage
+        run: pnpm deploy:selfhost --yes

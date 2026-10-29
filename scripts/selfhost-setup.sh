@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# open-seo self-host setup — run INSIDE a Codespace on JStrain1/open-seo.
+# open-seo self-host setup — run INSIDE a Codespace on SortedMateUK/open-seo.
 #
 # Does everything tedious for you:
 #   - installs deps (Node 22.6+)
@@ -55,9 +55,11 @@ read -rp "    Login email for Cloudflare Access [josh@sortedmate.com]: " ACCESS_
 ACCESS_EMAIL="${ACCESS_EMAIL:-josh@sortedmate.com}"
 
 echo "==> [4/5] Writing .env.selfhost"
-[ -f .env.selfhost ] || cp .env.selfhost.example .env.selfhost
+[ -f .env.selfhost ] || cp deploy/.env.selfhost.example .env.selfhost
 {
-  grep -vE '^(DATAFORSEO_API_KEY|ACCESS_ALLOWED_EMAILS)=' .env.selfhost 2>/dev/null || true
+  grep -vE '^(AUTH_MODE|DATAFORSEO_API_KEY|ACCESS_ALLOWED_EMAILS)=' .env.selfhost 2>/dev/null || true
+  # Our install signs in through Cloudflare Access (the example now defaults to password).
+  echo "AUTH_MODE=cloudflare_access"
   echo "DATAFORSEO_API_KEY=${DFS_B64}"
   echo "ACCESS_ALLOWED_EMAILS=${ACCESS_EMAIL}"
 } > .env.selfhost.tmp && mv .env.selfhost.tmp .env.selfhost
