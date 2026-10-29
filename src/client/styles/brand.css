@@ -1,0 +1,105 @@
+/* SortedMate SEO brand layer.
+ *
+ * Loaded after app.css (see src/routes/__root.tsx) and deliberately kept out
+ * of it: upstream owns app.css, this file is ours, so upstream merges never
+ * conflict here. It overrides the daisyUI theme variables that the two
+ * upstream themes define ("openseo" / "openseo-dark" stay as internal ids —
+ * nobody sees them) with the SortedMate tokens from the main app's index.css.
+ *
+ * Industrial-Modern | Black & Yellow | Bold & Confident.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+/* Typography — DM Sans for everything, JetBrains Mono for data and code. */
+:root {
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: #ffd000;
+  color: #000000;
+}
+
+/* Light — clean paper with yellow accents. */
+html[data-theme="openseo"] {
+  --color-base-100: #ffffff; /* content panel / card */
+  --color-base-200: #fafafa; /* page + sidebar (--background) */
+  --color-base-300: hsl(40 6% 85%); /* borders, warm grey (--border) */
+  --color-base-content: #141414; /* --foreground */
+  --color-primary: #ffd000; /* Electric Yellow */
+  --color-primary-content: #000000;
+  --color-secondary: hsl(40 6% 90%);
+  --color-secondary-content: hsl(0 0% 15%);
+  --color-accent: #ffd000;
+  --color-accent-content: #000000;
+  --color-neutral: #141414; /* industrial black */
+  --color-neutral-content: #ffffff;
+  --color-info: hsl(217 78% 42%);
+  --color-info-content: #ffffff;
+  --color-success: hsl(142 71% 45%);
+  --color-success-content: #ffffff;
+  --color-warning: hsl(38 92% 50%);
+  --color-warning-content: #000000;
+  --color-error: hsl(0 72% 51%);
+  --color-error-content: #ffffff;
+  --radius-selector: 0.625rem; /* 10px (--radius) */
+  --radius-field: 0.625rem;
+  --radius-box: 0.75rem;
+  --depth: 1; /* daisyUI's subtle 3D on buttons/cards — the "mechanical" feel */
+}
+
+/* Dark — tarmac black, yellow stays electric. */
+html[data-theme="openseo-dark"] {
+  --color-base-100: #171717; /* content panel / card */
+  --color-base-200: #0f0f0f; /* page + sidebar (--background) */
+  --color-base-300: hsl(0 0% 18%); /* --border */
+  --color-base-content: hsl(0 0% 96%); /* --foreground */
+  --color-primary: #ffd000;
+  --color-primary-content: #000000;
+  --color-secondary: hsl(0 0% 14%);
+  --color-secondary-content: hsl(0 0% 90%);
+  --color-accent: #ffd000;
+  --color-accent-content: #000000;
+  --color-neutral: hsl(0 0% 90%);
+  --color-neutral-content: #141414;
+  --color-info: hsl(213 90% 70%);
+  --color-info-content: hsl(0 0% 8%);
+  --color-success: hsl(142 64% 52%);
+  --color-success-content: hsl(0 0% 8%);
+  --color-warning: hsl(38 95% 58%);
+  --color-warning-content: hsl(0 0% 8%);
+  --color-error: hsl(0 72% 55%);
+  --color-error-content: #ffffff;
+  --radius-selector: 0.625rem;
+  --radius-field: 0.625rem;
+  --radius-box: 0.75rem;
+  --depth: 1;
+}
+
+/* Brand yellow is ~1.4:1 on white, so it is a fill colour, not a text colour.
+ * Text and link utilities that read `primary` get an AA-safe hard-hat amber
+ * in light mode; fills (btn, badge, bg, border) stay electric yellow.
+ * Dark mode needs nothing: #ffd000 on #0f0f0f is ~13:1. */
+html[data-theme="openseo"] .text-primary,
+html[data-theme="openseo"] .link-primary {
+  color: hsl(46 100% 27%);
+}
+
+html[data-theme="openseo"] .link-primary:hover {
+  color: hsl(46 100% 20%);
+}

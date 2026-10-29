@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseServiceTokenIds } from "../alchemy.access";
+import {
+  parseServiceTokenIds,
+  serviceTokenAccess,
+} from "../deploy/alchemy/alchemy.access";
 
 describe("parseServiceTokenIds", () => {
   it("empty means no service tokens", () => {
@@ -23,5 +26,24 @@ describe("parseServiceTokenIds", () => {
     expect(() =>
       parseServiceTokenIds("3fa85f64-5717-4562-b3fc-2c963f66afa6,nope"),
     ).toThrow(/nope/);
+  });
+});
+
+describe("serviceTokenAccess", () => {
+  const id = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
+
+  it("opts the app in when token ids are listed", () => {
+    expect(serviceTokenAccess(id, "")).toEqual({
+      serviceTokenIds: [id],
+      allowServiceTokens: true,
+    });
+  });
+
+  it("opts in with only the flag, for a self-managed Access application", () => {
+    expect(serviceTokenAccess("", "true").allowServiceTokens).toBe(true);
+  });
+
+  it("stays off by default", () => {
+    expect(serviceTokenAccess("", "").allowServiceTokens).toBe(false);
   });
 });

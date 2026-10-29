@@ -117,3 +117,17 @@ export const parseServiceTokenIds = (value: string): string[] => {
   }
   return ids;
 };
+
+/**
+ * Service-token settings for the self-host deploy. Listing token ids admits
+ * them on the provisioned application and opts the app in; with a self-managed
+ * Access application the operator admits them there and sets
+ * ACCESS_ALLOW_SERVICE_TOKENS=true instead.
+ */
+export const serviceTokenAccess = (ids: string, allowFlag: string) => {
+  const serviceTokenIds = parseServiceTokenIds(ids);
+  return {
+    serviceTokenIds,
+    allowServiceTokens: serviceTokenIds.length > 0 || allowFlag === "true",
+  };
+};
