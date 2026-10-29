@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- the whole self-host stack lives in one file; the SortedMate fork adds secret-keeping and service tokens */
 import * as Alchemy from "alchemy";
 import * as Cloudflare from "alchemy/Cloudflare";
 import * as CfWorkers from "@distilled.cloud/cloudflare/workers";
@@ -280,7 +281,7 @@ const dataEnv = {
   // AUTH_MODE, DATABASE_PROVIDER, BETTER_AUTH_URL, TEAM_DOMAIN, POLICY_AUD,
   // and OPENSEO_OPERATOR_SECRET are stage-dependent and set in the stack body
   // below, which also replaces an unset BETTER_AUTH_SECRET in password mode.
-  DATAFORSEO_API_KEY: Config.redacted("DATAFORSEO_API_KEY"),
+  DATAFORSEO_API_KEY: optionalSecret("DATAFORSEO_API_KEY"),
   BYPASS_EMAIL_VERIFICATION: optionalVar("BYPASS_EMAIL_VERIFICATION"),
   BETTER_AUTH_SECRET: optionalSecret("BETTER_AUTH_SECRET"),
   CRAWLER_ACCESS_SECRET: optionalSecret("CRAWLER_ACCESS_SECRET"),
