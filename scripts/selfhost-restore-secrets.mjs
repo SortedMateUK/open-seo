@@ -47,14 +47,27 @@ const api = async (method, path, body) => {
       `${method} ${path}: HTTP ${response.status} ${JSON.stringify(json.errors ?? [])}`,
     );
   }
-  return json.result;
+  return json;
+};
+const get = async (path) => (await api("GET", path)).result;
+
+// Every page of an account-wide list.
+const listAll = async (path) => {
+  const items = [];
+  for (let page = 1; ; page++) {
+    const { result, result_info: info } = await api(
+      "GET",
+      `${path}?per_page=100&page=${page}`,
+    );
+    items.push(...result);
+    if (!info || result.length === 0 || page >= (info.total_pages ?? page)) {
+      return items;
+    }
+  }
 };
 
 const secretNamesOf = async (worker, versionId) => {
-  const version = await api(
-    "GET",
-    `/workers/scripts/${worker}/versions/${versionId}`,
-  );
+  const version = await get(`/workers/scripts/${worker}/versions/${versionId}`);
   return version.resources.bindings
     .filter((binding) => binding.type === "secret_text")
     .map((binding) => binding.name)
@@ -64,11 +77,8 @@ const secretNamesOf = async (worker, versionId) => {
 // Cloudflare rejects a version that drops a Durable Object or Workflow class
 // the Worker implements, so the placeholder exports a stub of each one.
 const classesOf = async (worker) => {
-  const namespaces = await api(
-    "GET",
-    "/workers/durable_objects/namespaces?per_page=1000",
-  );
-  const workflows = await api("GET", "/workflows?per_page=100");
+  const namespaces = await listAll("/workers/durable_objects/namespaces");
+  const workflows = await listAll("/workflows");
   return {
     durableObjects: namespaces
       .filter((namespace) => namespace.script === worker)
@@ -98,48 +108,54 @@ const placeholderFor = ({ durableObjects, workflows }) =>
   ].join("\n");
 
 const liveVersions = async (worker) => {
-  const { deployments } = await api(
-    "GET",
-    `/workers/scripts/${worker}/deployments`,
-  );
+  const { deployments } = await get(`/workers/scripts/${worker}/deployments`);
   return JSON.stringify(deployments[0]?.versions ?? []);
 };
 
+// Read everything for every Worker first, so a bad version id or a missing
+// permission stops the run before any carrier is uploaded.
+const plans = [];
 for (const [worker, sourceVersion] of targets) {
-  const liveBefore = await liveVersions(worker);
   const names = await secretNamesOf(worker, sourceVersion);
   if (names.length === 0) {
     fail(`${worker} version ${sourceVersion} has no secrets to copy`);
   }
-  console.log(
-    `${worker}: copying ${names.length} secrets from ${sourceVersion}: ${names.join(", ")}`,
-  );
-
   const classes = await classesOf(worker);
   console.log(
-    `${worker}: stubbing classes ${[...classes.durableObjects, ...classes.workflows].join(", ") || "(none)"}`,
+    `${worker}: will copy ${names.length} secrets from ${sourceVersion}: ${names.join(", ")}; stubbing classes ${[...classes.durableObjects, ...classes.workflows].join(", ") || "(none)"}`,
   );
+  plans.push({ worker, sourceVersion, names, classes });
+}
+
+for (const { worker, sourceVersion, names, classes } of plans) {
+  const liveBefore = await liveVersions(worker);
 
   // No `deploy` flag: the version is uploaded but serves no traffic.
-  const created = await api("POST", `/workers/workers/${worker}/versions`, {
-    main_module: "carrier.mjs",
-    modules: [
-      {
-        name: "carrier.mjs",
-        content_type: "application/javascript+module",
-        content_base64: Buffer.from(placeholderFor(classes)).toString("base64"),
+  const { result: created } = await api(
+    "POST",
+    `/workers/workers/${worker}/versions`,
+    {
+      main_module: "carrier.mjs",
+      modules: [
+        {
+          name: "carrier.mjs",
+          content_type: "application/javascript+module",
+          content_base64: Buffer.from(placeholderFor(classes)).toString(
+            "base64",
+          ),
+        },
+      ],
+      compatibility_date: "2025-09-02",
+      bindings: names.map((name) => ({
+        type: "inherit",
+        name,
+        version_id: sourceVersion,
+      })),
+      annotations: {
+        "workers/message": `Secrets carrier: copies secrets from ${sourceVersion}. Not for traffic.`,
       },
-    ],
-    compatibility_date: "2025-09-02",
-    bindings: names.map((name) => ({
-      type: "inherit",
-      name,
-      version_id: sourceVersion,
-    })),
-    annotations: {
-      "workers/message": `Secrets carrier: copies secrets from ${sourceVersion}. Not for traffic.`,
     },
-  });
+  );
 
   const copied = await secretNamesOf(worker, created.id);
   const missing = names.filter((name) => !copied.includes(name));

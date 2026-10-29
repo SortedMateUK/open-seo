@@ -113,7 +113,7 @@ Each token works in the shared workspace as its own service user. If you manage 
 - `https://<your-worker-hostname>/api/health` reports runtime configuration checks and database status.
 - Cloudflare Access login fails: re-check `ACCESS_ALLOWED_EMAILS` in `.env.selfhost` and redeploy.
 - For server errors, open the Worker `Logs` or run `pnpm exec wrangler tail`. Site audits run in a separate worker: `pnpm exec wrangler tail open-seo-selfhost-audit`.
-- A deploy lost a secret (the Deploy self-host workflow's last step fails and names it): every Worker version keeps its own copy of its secrets, so upload a new version of the current code with that binding as `{"type": "inherit", "name": "<SECRET>", "version_id": "<previous version id>"}` (Workers → the Worker → Deployments shows the version ids). No one needs to re-enter the value. In the SortedMate fork, Actions → **Restore self-host secrets** does this for every secret (it uploads an undeployed version that holds them), and then **Deploy self-host** keeps them.
+- A deploy lost a secret (the Deploy self-host workflow's last step fails and names it): every Worker version keeps its own copy of its secrets, so upload a new version of the current code with that binding as `{"type": "inherit", "name": "<SECRET>", "version_id": "<previous version id>"}` (Workers → the Worker → Deployments shows the version ids). No one needs to re-enter the value. In the SortedMate fork, Actions → **Restore self-host secrets** does this for every secret (it uploads an undeployed version that holds them), and then **Deploy self-host** with **force** ticked keeps them. Give it the newest version ids that still hold every secret you need, not ones from before a key was rotated.
 
 ## Tearing it down
 
