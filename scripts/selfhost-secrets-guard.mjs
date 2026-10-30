@@ -11,14 +11,16 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const WORKERS = ["open-seo-selfhost", "open-seo-selfhost-audit"];
 const SNAPSHOT_FILE = ".selfhost-secrets-before.json";
-// Hosted-service keys the September deploy carried but the self-host never
-// uses. Dropping one is expected unless .env.selfhost sets it.
+// Keys the September deploy carried that the self-host no longer uses
+// (OPENROUTER_API_KEY: chat assistant off by choice, 30 Oct 2026).
+// Dropping one is expected unless .env.selfhost sets it.
 const UNUSED = new Set([
   "AUTUMN_SECRET_KEY",
   "AUTUMN_WEBHOOK_SECRET",
   "DUB_API_KEY",
   "GDPR_ERASURE_SECRET",
   "LOOPS_API_KEY",
+  "OPENROUTER_API_KEY",
   "TURNSTILE_SECRET_KEY",
 ]);
 
