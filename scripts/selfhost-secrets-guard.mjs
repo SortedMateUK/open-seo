@@ -11,6 +11,16 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const WORKERS = ["open-seo-selfhost", "open-seo-selfhost-audit"];
 const SNAPSHOT_FILE = ".selfhost-secrets-before.json";
+// Hosted-service keys the September deploy carried but the self-host never
+// uses. ENV_SELFHOST leaves them out, so dropping them is expected.
+const UNUSED = new Set([
+  "AUTUMN_SECRET_KEY",
+  "AUTUMN_WEBHOOK_SECRET",
+  "DUB_API_KEY",
+  "GDPR_ERASURE_SECRET",
+  "LOOPS_API_KEY",
+  "TURNSTILE_SECRET_KEY",
+]);
 
 const { CLOUDFLARE_API_TOKEN: token, CLOUDFLARE_ACCOUNT_ID: accountId } =
   process.env;
@@ -62,7 +72,7 @@ const before = JSON.parse(readFileSync(SNAPSHOT_FILE, "utf8"));
 let lost = 0;
 for (const worker of WORKERS) {
   const missing = (before[worker] ?? []).filter(
-    (name) => !current[worker].includes(name),
+    (name) => !UNUSED.has(name) && !current[worker].includes(name),
   );
   console.log(
     `${worker}: ${current[worker].length} secrets after deploy (${before[worker]?.length ?? 0} before)`,
