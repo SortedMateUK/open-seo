@@ -93,18 +93,23 @@ jobs:
           ENV_SELFHOST: ${{ secrets.ENV_SELFHOST }}
 
       # The deploy blanks any secret the env file leaves out, so stop here
-      # unless the keys the portal runs on are all set. Names only.
+      # unless the keys the portal runs on are all set. Parsed the way the
+      # preflight reads the file (quotes stripped, last line wins). Names only.
       - name: Check ENV_SELFHOST holds every key
         run: |
-          missing=0
-          for name in DATAFORSEO_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET BETTER_AUTH_SECRET ACCESS_ALLOWED_EMAILS ACCESS_SERVICE_TOKEN_IDS; do
-            if ! grep -Eq "^[[:space:]]*${name}[[:space:]]*=[[:space:]]*[^[:space:]]" .env.selfhost; then
-              echo "::error::ENV_SELFHOST has no value for $name"
-              missing=1
-            fi
-          done
-          echo "Names set: $(grep -Eo '^[[:space:]]*[A-Z_][A-Z0-9_]*=' .env.selfhost | tr -d ' =' | sort | tr '\n' ' ')"
-          exit $missing
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const env = {};
+            for (const line of readFileSync(".env.selfhost", "utf8").split("\n")) {
+              const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/.exec(line);
+              if (match) env[match[1]] = match[2].replace(/^(["\x27])(.*)\1$/, "$2");
+            }
+            const required = ["DATAFORSEO_API_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "BETTER_AUTH_SECRET", "ACCESS_ALLOWED_EMAILS", "ACCESS_SERVICE_TOKEN_IDS"];
+            const missing = required.filter((name) => !env[name]?.trim());
+            for (const name of missing) console.log(`::error::ENV_SELFHOST has no value for ${name}`);
+            console.log(`Names set: ${Object.keys(env).filter((name) => env[name]).sort().join(" ")}`);
+            process.exit(missing.length ? 1 : 0);
+          '
 
       # Same command as a local self-host deploy: preflight, vite build,
       # tsc, alchemy deploy --stage selfhost.
