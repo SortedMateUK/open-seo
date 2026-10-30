@@ -70,7 +70,7 @@ for (const worker of WORKERS) {
   if (missing.length > 0) {
     lost += missing.length;
     console.error(
-      `::error::${worker} lost ${missing.join(", ")}. Restore them from the previous version with an "inherit" binding (docs/SELF_HOSTING_CLOUDFLARE.md, Troubleshooting).`,
+      `::error::${worker} lost ${missing.join(", ")}. Roll the Worker back in the dashboard (Deployments), then add the missing keys to ENV_SELFHOST and redeploy.`,
     );
   }
 }

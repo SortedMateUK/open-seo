@@ -43,11 +43,9 @@ for (const line of readFileSync(envFile, "utf8").split("\n")) {
   const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/.exec(line);
   if (match) env[match[1]] = match[2].replace(/^(["'])(.*)\1$/, "$2");
 }
-// SortedMate fork: a redeploy keeps the key already on the Worker, so only a
-// first deploy needs it here.
 if (!env.DATAFORSEO_API_KEY) {
-  console.warn(
-    `${em("DATAFORSEO_API_KEY")} is not set in ${envFile}; the live Worker keeps its current key. A first deploy needs it — see docs/DATAFORSEO_API_KEY.md.`,
+  fail(
+    `${em("DATAFORSEO_API_KEY")} is not set in ${envFile} — see docs/DATAFORSEO_API_KEY.md for how to get one.`,
   );
 }
 // Mirrors the stack's default (deploy/alchemy/alchemy.run.ts): an unset

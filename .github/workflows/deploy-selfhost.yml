@@ -16,14 +16,15 @@ name: Deploy self-host
 #                          edit (alchemy binds its state-store token from it),
 #                          Account Settings read.
 #   CLOUDFLARE_ACCOUNT_ID  32-hex account id (Workers & Pages → Account details).
-#   ENV_SELFHOST           Full contents of .env.selfhost — DATAFORSEO_API_KEY,
-#                          ACCESS_ALLOWED_EMAILS, plus any optional extras.
+#   ENV_SELFHOST           Full contents of .env.selfhost, every key included:
+#                          the deploy sets each Worker secret from this file
+#                          and blanks any it leaves out, as upstream does.
 
 on:
   workflow_dispatch:
     inputs:
       force:
-        description: Upload every resource even if alchemy sees no change (after Restore self-host secrets)
+        description: Upload every resource even if alchemy sees no change (e.g. after a dashboard rollback)
         type: boolean
         default: false
 
@@ -91,6 +92,20 @@ jobs:
         env:
           ENV_SELFHOST: ${{ secrets.ENV_SELFHOST }}
 
+      # The deploy blanks any secret the env file leaves out, so stop here
+      # unless the keys the portal runs on are all set. Names only.
+      - name: Check ENV_SELFHOST holds every key
+        run: |
+          missing=0
+          for name in DATAFORSEO_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET BETTER_AUTH_SECRET ACCESS_ALLOWED_EMAILS ACCESS_SERVICE_TOKEN_IDS; do
+            if ! grep -Eq "^[[:space:]]*${name}[[:space:]]*=[[:space:]]*[^[:space:]]" .env.selfhost; then
+              echo "::error::ENV_SELFHOST has no value for $name"
+              missing=1
+            fi
+          done
+          echo "Names set: $(grep -Eo '^[[:space:]]*[A-Z_][A-Z0-9_]*=' .env.selfhost | tr -d ' =' | sort | tr '\n' ' ')"
+          exit $missing
+
       # Same command as a local self-host deploy: preflight, vite build,
       # tsc, alchemy deploy --stage selfhost.
       # Record the live Workers' secret names, so the check after the deploy
@@ -98,12 +113,8 @@ jobs:
       - name: Snapshot live secret names
         run: node scripts/selfhost-secrets-guard.mjs snapshot
 
-      # The patched alchemy carries each snapshotted secret the env file
-      # doesn't set over by name, and the upload fails rather than drop one.
       - name: Deploy self-host stage
         run: pnpm deploy:selfhost --yes ${{ inputs.force && '--force' || '' }}
-        env:
-          ALCHEMY_KEEP_SECRETS_FILE: ${{ github.workspace }}/.selfhost-secrets-before.json
 
       - name: Check no live secret was lost
         run: node scripts/selfhost-secrets-guard.mjs verify
