@@ -1,0 +1,33 @@
+name: Roll back self-host
+
+# One-off: runs on push to this branch only (workflow_dispatch needs the
+# file on main). Points both Workers back at the 29 Sep versions.
+on:
+  push:
+    branches: [sortedmate/rollback-selfhost]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-selfhost
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    if: github.repository == 'SortedMateUK/open-seo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Roll back both Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >-
+          node scripts/selfhost-rollback.mjs
+          open-seo-selfhost=8bda6ae2-4d46-4de9-9bf5-ad43365f7534
+          open-seo-selfhost-audit=4994f7ee-59ef-48f3-b85c-095c318e7d03
