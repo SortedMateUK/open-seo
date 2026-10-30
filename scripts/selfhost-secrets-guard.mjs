@@ -11,6 +11,18 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const WORKERS = ["open-seo-selfhost", "open-seo-selfhost-audit"];
 const SNAPSHOT_FILE = ".selfhost-secrets-before.json";
+// Keys the September deploy carried that the self-host no longer uses
+// (OPENROUTER_API_KEY: chat assistant off by choice, 30 Oct 2026).
+// Dropping one is expected unless .env.selfhost sets it.
+const UNUSED = new Set([
+  "AUTUMN_SECRET_KEY",
+  "AUTUMN_WEBHOOK_SECRET",
+  "DUB_API_KEY",
+  "GDPR_ERASURE_SECRET",
+  "LOOPS_API_KEY",
+  "OPENROUTER_API_KEY",
+  "TURNSTILE_SECRET_KEY",
+]);
 
 const { CLOUDFLARE_API_TOKEN: token, CLOUDFLARE_ACCOUNT_ID: accountId } =
   process.env;
@@ -59,10 +71,18 @@ if (!existsSync(SNAPSHOT_FILE)) {
   fail(`${SNAPSHOT_FILE} not found; run the snapshot step before deploying`);
 }
 const before = JSON.parse(readFileSync(SNAPSHOT_FILE, "utf8"));
+const envNames = new Set(
+  readFileSync(".env.selfhost", "utf8")
+    .split("\n")
+    .map((line) => /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\S/.exec(line)?.[1])
+    .filter(Boolean),
+);
 let lost = 0;
 for (const worker of WORKERS) {
   const missing = (before[worker] ?? []).filter(
-    (name) => !current[worker].includes(name),
+    (name) =>
+      !(UNUSED.has(name) && !envNames.has(name)) &&
+      !current[worker].includes(name),
   );
   console.log(
     `${worker}: ${current[worker].length} secrets after deploy (${before[worker]?.length ?? 0} before)`,
@@ -70,7 +90,7 @@ for (const worker of WORKERS) {
   if (missing.length > 0) {
     lost += missing.length;
     console.error(
-      `::error::${worker} lost ${missing.join(", ")}. Restore them from the previous version with an "inherit" binding (docs/SELF_HOSTING_CLOUDFLARE.md, Troubleshooting).`,
+      `::error::${worker} lost ${missing.join(", ")}. Roll the Worker back in the dashboard (Deployments), then add the missing keys to ENV_SELFHOST and redeploy.`,
     );
   }
 }
