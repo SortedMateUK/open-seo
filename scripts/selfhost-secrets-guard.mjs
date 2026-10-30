@@ -12,7 +12,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 const WORKERS = ["open-seo-selfhost", "open-seo-selfhost-audit"];
 const SNAPSHOT_FILE = ".selfhost-secrets-before.json";
 // Hosted-service keys the September deploy carried but the self-host never
-// uses. ENV_SELFHOST leaves them out, so dropping them is expected.
+// uses. Dropping one is expected unless .env.selfhost sets it.
 const UNUSED = new Set([
   "AUTUMN_SECRET_KEY",
   "AUTUMN_WEBHOOK_SECRET",
@@ -69,10 +69,18 @@ if (!existsSync(SNAPSHOT_FILE)) {
   fail(`${SNAPSHOT_FILE} not found; run the snapshot step before deploying`);
 }
 const before = JSON.parse(readFileSync(SNAPSHOT_FILE, "utf8"));
+const envNames = new Set(
+  readFileSync(".env.selfhost", "utf8")
+    .split("\n")
+    .map((line) => /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\S/.exec(line)?.[1])
+    .filter(Boolean),
+);
 let lost = 0;
 for (const worker of WORKERS) {
   const missing = (before[worker] ?? []).filter(
-    (name) => !UNUSED.has(name) && !current[worker].includes(name),
+    (name) =>
+      !(UNUSED.has(name) && !envNames.has(name)) &&
+      !current[worker].includes(name),
   );
   console.log(
     `${worker}: ${current[worker].length} secrets after deploy (${before[worker]?.length ?? 0} before)`,
