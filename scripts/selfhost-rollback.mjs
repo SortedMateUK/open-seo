@@ -1,5 +1,6 @@
 // SortedMate fork: points each Worker's live traffic at a known-good version
-// (100%), then prints the live version and its secret names (never values).
+// (100%; force=true accepts that its secrets differ from the newest
+// version, as the dashboard rollback does), then prints the live version and its secret names (never values).
 //
 //   node scripts/selfhost-rollback.mjs <worker>=<version id> ...
 const { CLOUDFLARE_API_TOKEN: token, CLOUDFLARE_ACCOUNT_ID: accountId } =
@@ -28,7 +29,7 @@ const api = async (method, path, body) => {
 };
 
 for (const [worker, versionId] of process.argv.slice(2).map((a) => a.split("="))) {
-  await api("POST", `/workers/scripts/${worker}/deployments`, {
+  await api("POST", `/workers/scripts/${worker}/deployments?force=true`, {
     strategy: "percentage",
     versions: [{ version_id: versionId, percentage: 100 }],
     annotations: { "workers/message": "Rollback to the 29 Sep version" },
