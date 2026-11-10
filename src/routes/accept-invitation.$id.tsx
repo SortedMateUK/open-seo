@@ -9,9 +9,10 @@ import { clearLastProjectId } from "@/client/lib/active-project";
 import { captureClientEvent } from "@/client/lib/posthog";
 import { authClient, signOutAndRedirect, useSession } from "@/lib/auth-client";
 import { usesBetterAuthClient } from "@/lib/auth-mode";
-import { APP_NAME } from "@/shared/brand";
+import { pageHead } from "@/client/lib/pageHead";
 
 export const Route = createFileRoute("/accept-invitation/$id")({
+  head: () => pageHead("Accept invitation"),
   beforeLoad: () => {
     if (!usesBetterAuthClient()) {
       throw notFound();
@@ -46,7 +47,7 @@ function SignedOutInvitationCard({ invitationId }: { invitationId: string }) {
   return (
     <AuthPageCard title="You&rsquo;re invited">
       <p className="text-sm text-muted-foreground">
-        You&rsquo;ve been invited to join an organization on {APP_NAME}. Sign in
+        You&rsquo;ve been invited to join an organization on OpenSEO. Sign in
         with the email address that received the invitation, or create an
         account with it, to accept.
       </p>
@@ -116,10 +117,13 @@ function InvitationCard({
 
       // Accepting updates the session row but not the session cookie cache;
       // setActive refreshes the cookie so the app opens in the joined org
-      // immediately instead of after the cache expires.
-      await authClient.organization.setActive({
-        organizationId: accepted.data.invitation.organizationId,
-      });
+      // immediately instead of after the cache expires. The invitation is
+      // already accepted here, so a failed refresh must not report otherwise.
+      await authClient.organization
+        .setActive({
+          organizationId: accepted.data.invitation.organizationId,
+        })
+        .catch(() => undefined);
       captureClientEvent("team:invitation_accept");
       // Full navigation: every cached query in this tab, and the remembered
       // project, belong to the old workspace.
@@ -236,7 +240,7 @@ function InvitationCard({
         <span className="font-medium">
           {invitationQuery.data.organizationName}
         </span>{" "}
-        on {APP_NAME}.
+        on OpenSEO.
       </p>
       {actionError ? (
         <Alert variant="destructive">

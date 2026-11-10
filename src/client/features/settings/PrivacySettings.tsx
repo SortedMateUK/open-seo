@@ -8,7 +8,6 @@ import {
 import { Switch } from "@/client/components/ui/switch";
 import { useSession } from "@/lib/auth-client";
 import { setProductUpdatesOptIn } from "@/serverFunctions/product-updates";
-import { APP_NAME } from "@/shared/brand";
 
 export function PrivacySettings() {
   const choices = usePrivacyChoices();
@@ -29,8 +28,7 @@ export function PrivacySettings() {
         <div>
           <p className="text-sm">Usage analytics</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Share usage analytics and session replays to help improve {APP_NAME}
-            .
+            Share usage analytics and session replays to help improve OpenSEO.
           </p>
         </div>
         <Switch

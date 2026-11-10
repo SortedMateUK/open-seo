@@ -3,13 +3,14 @@ import { z } from "zod";
 import { Button } from "@/client/components/ui/button";
 import { AuthPageCard, AuthPageShell } from "@/client/features/auth/AuthPage";
 import { googleAuthErrorCopy } from "@/client/features/integrations/googleAuthErrorCopy";
-import { APP_NAME } from "@/shared/brand";
+import { pageHead } from "@/client/lib/pageHead";
 
 const authErrorSearchSchema = z.object({
   error: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth-error")({
+  head: () => pageHead("Connection error"),
   validateSearch: authErrorSearchSchema,
   component: AuthErrorPage,
 });
@@ -44,7 +45,7 @@ function AuthErrorPage() {
           variant="secondary"
           className="w-full"
         >
-          Back to {APP_NAME}
+          Back to OpenSEO
         </Button>
       </AuthPageCard>
     </AuthPageShell>

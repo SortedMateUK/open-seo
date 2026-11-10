@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/client/components/ui/card";
 import { PageHeader } from "@/client/components/PageHeader";
-import { ArrowUpRight, ShieldAlert } from "lucide-react";
+import { ArrowUpRight, Info } from "lucide-react";
 import { getClientAuthMode } from "@/lib/auth-mode";
 import { captureClientEvent } from "@/client/lib/posthog";
 import {
@@ -27,7 +27,7 @@ import {
 } from "@/client/features/ai-mcp/agentSetupPrompt";
 import { CopyButton } from "@/client/components/CopyButton";
 import { AgentList } from "@/client/features/ai-mcp/AgentList";
-import { APP_NAME } from "@/shared/brand";
+import { pageHead } from "@/client/lib/pageHead";
 
 const DOCS_URL = "https://openseo.so/docs/agent-setup";
 
@@ -72,6 +72,7 @@ const aiSearchSchema = z.object({
 });
 
 export const Route = createFileRoute("/_app/ai")({
+  head: () => pageHead("Agent setup"),
   validateSearch: aiSearchSchema,
   component: AiPage,
 });
@@ -90,7 +91,7 @@ function AiPage() {
       <div className="mx-auto max-w-7xl">
         <PageHeader
           title="Agent setup"
-          description={`The most powerful way to use ${APP_NAME} is through the AI agent you already use. Set it up once, then ask it anything.`}
+          description="The most powerful way to use OpenSEO is through the AI agent you already use. Set it up once, then ask it anything."
         />
 
         <Tabs
@@ -120,7 +121,7 @@ function AiPage() {
                       </CardTitle>
                       <CardDescription>
                         Paste the setup prompt into your agent to connect
-                        {APP_NAME} and install its SEO skills. It will guide you
+                        OpenSEO and install its SEO skills. It will guide you
                         through any manual steps.
                       </CardDescription>
                     </CardHeader>
@@ -171,8 +172,8 @@ function AiPage() {
                       </CardTitle>
                       <CardDescription>
                         Already connected? Paste the update prompt into your
-                        agent to get the latest {APP_NAME} skills while
-                        preserving your connection settings and personal edits.
+                        agent to get the latest OpenSEO skills while preserving
+                        your connection settings and personal edits.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-wrap items-center gap-x-5 gap-y-3">
@@ -200,14 +201,15 @@ function AiPage() {
                 </div>
 
                 {getClientAuthMode() === "cloudflare_access" ? (
-                  <Alert variant="warning" className="mt-8">
-                    <ShieldAlert />
+                  <Alert className="mt-8">
+                    <Info />
                     <AlertDescription>
-                      This instance is behind Cloudflare Access. MCP clients
-                      cannot connect until Managed OAuth is enabled on your
-                      Access application.{" "}
+                      This instance is behind Cloudflare Access, so MCP clients
+                      connect through Managed OAuth on your Access application.
+                      If a client gets a login page instead of connecting, check
+                      that Managed OAuth is on.{" "}
                       <a
-                        href="https://openseo.so/docs/self-hosting/cloudflare#connect-the-mcp-server-through-cloudflare-access"
+                        href="https://github.com/every-app/open-seo/blob/main/docs/SELF_HOSTING_CLOUDFLARE_OPERATIONS.md#through-cloudflare-access"
                         target="_blank"
                         rel="noreferrer"
                         className="font-medium"
@@ -286,8 +288,8 @@ function EveryAppAgentSetup() {
             <h2>Connect your agent to Every App</h2>
           </CardTitle>
           <CardDescription>
-            Every App has one address for your agent, and it covers {APP_NAME}{" "}
-            and your other apps. Connect it once.
+            Every App has one address for your agent, and it covers OpenSEO and
+            your other apps. Connect it once.
           </CardDescription>
         </CardHeader>
         {gatewayUrl ? (
@@ -307,8 +309,8 @@ function EveryAppAgentSetup() {
             <h2>Install the SEO skills</h2>
           </CardTitle>
           <CardDescription>
-            Run this in a terminal to add {APP_NAME}'s skills to your agent.
-            They use {APP_NAME} through your Every App connection.
+            Run this in a terminal to add OpenSEO's skills to your agent. They
+            use OpenSEO through your Every App connection.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-x-5 gap-y-3">

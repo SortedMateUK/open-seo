@@ -22,7 +22,6 @@ import appCss from "@/client/styles/app.css?url";
 import brandCss from "@/client/styles/brand.css?url";
 import { Toaster } from "sonner";
 import { queryClient } from "@/client/tanstack-db";
-import { APP_NAME } from "@/shared/brand";
 
 // Capture Google link error params before the router starts — a route loader
 // redirect would otherwise replace the URL and lose them. See googleLinkError.ts.
@@ -32,7 +31,7 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       {
-        title: APP_NAME,
+        title: "OpenSEO",
       },
       {
         charSet: "utf-8",

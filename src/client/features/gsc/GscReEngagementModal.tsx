@@ -16,7 +16,6 @@ import { captureClientEvent } from "@/client/lib/posthog";
 import { isHostedClientAuthMode } from "@/lib/auth-mode";
 import { getGscGrantStatus } from "@/serverFunctions/gsc";
 import { dismissGscNudge } from "@/serverFunctions/onboarding";
-import { APP_NAME } from "@/shared/brand";
 
 /**
  * One-time prompt nudging users who finished onboarding without the Search
@@ -61,8 +60,7 @@ export function GscReEngagementModal({
   // Users who finished onboarding outside the wizard have no
   // gscNudgeDismissedAt set: legacy users from before the step existed, and
   // users whose agent completed onboarding by connecting over MCP or calling
-  // create_project. Anyone who completes the wizard gets it stamped, and
-  // dismissing/connecting clears it.
+  // create_project. Completing the wizard, dismissing, or connecting stamps it.
   const eligible =
     hosted &&
     !suppressed &&
@@ -119,8 +117,8 @@ export function GscReEngagementModal({
             Connect Google Search Console
           </DialogTitle>
           <DialogDescription>
-            Bring your real clicks, impressions, and rankings into {APP_NAME}{" "}
-            and query them from Claude or Codex over MCP. It never uses credits.
+            Bring your real clicks, impressions, and rankings into OpenSEO and
+            query them from Claude or Codex over MCP. It never uses credits.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

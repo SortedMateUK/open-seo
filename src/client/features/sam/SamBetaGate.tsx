@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { GateCard } from "@/client/components/GateCard";
 import { Button } from "@/client/components/ui/button";
-import { APP_NAME } from "@/shared/brand";
 
 /**
  * Shown on the chat route until the user opts into Sam. Sam is the OpenSEO
@@ -18,10 +17,10 @@ export function SamBetaGate({ onContinue }: { onContinue: () => void }) {
       description={
         <>
           <p>
-            Sam is the {APP_NAME} MCP and skills wrapped in a chat window. The
+            Sam is the OpenSEO MCP and skills wrapped in a chat window. The
             agent you already use, like Claude Code, ChatGPT, Grok Bot, or
             Hermes, runs that same toolset on a much more capable harness. We
-            recommend using {APP_NAME} there.
+            recommend using OpenSEO there.
           </p>
           <p>You can still use Sam, but it is early and has rough edges.</p>
         </>
