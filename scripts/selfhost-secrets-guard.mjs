@@ -18,11 +18,15 @@ const UNUSED = new Set([
   "AUTUMN_SECRET_KEY",
   "AUTUMN_WEBHOOK_SECRET",
   "DUB_API_KEY",
-  "GDPR_ERASURE_SECRET",
   "LOOPS_API_KEY",
   "OPENROUTER_API_KEY",
   "TURNSTILE_SECRET_KEY",
 ]);
+
+// Keys upstream stopped deploying altogether, so they drop even when
+// .env.selfhost still sets them (v0.1.26 replaced the GDPR erasure endpoint
+// with in-app account deletion).
+const RETIRED = new Set(["GDPR_ERASURE_SECRET"]);
 
 const { CLOUDFLARE_API_TOKEN: token, CLOUDFLARE_ACCOUNT_ID: accountId } =
   process.env;
@@ -81,6 +85,7 @@ let lost = 0;
 for (const worker of WORKERS) {
   const missing = (before[worker] ?? []).filter(
     (name) =>
+      !RETIRED.has(name) &&
       !(UNUSED.has(name) && !envNames.has(name)) &&
       !current[worker].includes(name),
   );

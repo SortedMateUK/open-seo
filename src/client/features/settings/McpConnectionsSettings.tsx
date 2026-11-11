@@ -22,7 +22,6 @@ import {
   listMcpConnections,
   revokeMcpConnection,
 } from "@/serverFunctions/mcp-connections";
-import { APP_NAME } from "@/shared/brand";
 
 export function McpConnectionsSettings() {
   const queryClient = useQueryClient();
@@ -51,7 +50,7 @@ export function McpConnectionsSettings() {
   return (
     <section className="space-y-3">
       <SectionHeader title="Connected agents" />
-      <p className="text-sm">AI clients signed in to {APP_NAME} with OAuth.</p>
+      <p className="text-sm">AI clients signed in to OpenSEO with OAuth.</p>
 
       <QueryState
         query={connectionsQuery}
@@ -125,7 +124,7 @@ export function McpConnectionsSettings() {
           onClose={() => setDisconnecting(null)}
           onConfirm={() => disconnectMutation.mutate(disconnecting.id)}
         >
-          It will have to sign in to {APP_NAME} again.
+          It will have to sign in to OpenSEO again.
         </ConfirmDialog>
       ) : null}
     </section>

@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { leanWorkerBundle } from "./vite-plugin-lean-worker-bundle.ts";
 import { mcpWidgets } from "./vite-plugin-mcp-widgets.ts";
+import { brand } from "./vite-plugin-brand.ts";
 
 const require = createRequire(import.meta.url);
 // Better Auth's workerd export selects node:crypto.scrypt, which celld does
@@ -138,6 +139,7 @@ export default defineConfig(
         : undefined,
       plugins: [
         mcpWidgets(),
+        brand(),
         leanWorkerBundle(),
         showDevtools
           ? devtools({

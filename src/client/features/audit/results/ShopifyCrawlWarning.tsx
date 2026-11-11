@@ -23,7 +23,6 @@ import {
   SHOPIFY_CRAWLER_ACCESS_DOC_URL,
   isCrawlerAccessExpired,
 } from "@/shared/crawler-access";
-import { APP_NAME } from "@/shared/brand";
 
 /**
  * Shown instead of the generic crawl warnings when a Shopify storefront
@@ -33,9 +32,9 @@ import { APP_NAME } from "@/shared/brand";
  * The setup steps only show while the domain has no usable signature. Once
  * one is saved they collapse to a single line with the re-run button. An
  * unrendered crawl Shopify still rate limited with the signature asks for
- * rendering instead. On Every App, where CRAWLER_ACCESS_SECRET is optional,
- * the warning says to set it first when it isn't: a signature created too
- * early only runs down its expiry.
+ * rendering instead. Where CRAWLER_ACCESS_SECRET is optional (Every App and
+ * self-hosts), the warning says to set it first when it isn't: a signature
+ * created too early only runs down its expiry.
  */
 export function ShopifyCrawlWarning({
   projectId,
@@ -190,7 +189,7 @@ export function ShopifyCrawlWarning({
               Shopify rate-limits crawlers it hasn't authorized, so parts of
               this report are missing.
               {canStoreCrawlerAccess
-                ? ` If you own this store, authorizing ${APP_NAME} takes about a minute.`
+                ? " If you own this store, authorizing OpenSEO takes about a minute."
                 : null}
             </p>
           </>

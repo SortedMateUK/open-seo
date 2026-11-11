@@ -9,12 +9,13 @@ import {
   CardTitle,
 } from "@/client/components/ui/card";
 import { SUPPORT_EMAIL } from "@/client/lib/support";
-import { APP_NAME } from "@/shared/brand";
+import { pageHead } from "@/client/lib/pageHead";
 
 const DISCORD_URL = "https://discord.gg/c9uGs3cFXr";
 const GITHUB_URL = "https://github.com/every-app/open-seo";
 
 export const Route = createFileRoute("/_app/support")({
+  head: () => pageHead("Help & Community"),
   component: SupportPage,
 });
 
@@ -28,7 +29,7 @@ function SupportPage() {
           </p>
           <PageHeader
             title="We want to hear from you"
-            description={`We want to talk to you! We're super open to feedback and want to learn how you work so we can make ${APP_NAME} better.`}
+            description="We want to talk to you! We're super open to feedback and want to learn how you work so we can make OpenSEO better."
           />
         </div>
 
