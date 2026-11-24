@@ -22,6 +22,7 @@ import type { DetectedIssue } from "@/server/lib/audit/issues/page-reporters";
 import type { AuditConfig } from "@/server/lib/audit/types";
 import type { CrawlerAccess } from "@/shared/crawler-access";
 import type { RenderUsage } from "@/shared/audit-rendering";
+import { auditRefusalReason, AuditStatus } from "@/shared/audit-status";
 import { captureServerEvent } from "@/server/lib/posthog";
 import {
   runCrawlPhase,
@@ -72,20 +73,20 @@ export async function runAuditPhases(
     access,
   } = params;
   const origin = getOrigin(startUrl);
-  const maxPages = config.maxPages;
+  const { maxPages, excludePaths } = config;
 
   const discovery = await runDiscoveryPhase(step, {
     auditId,
     workflowInstanceId,
     origin,
     startUrl,
-    maxPages,
+    config,
     access,
   });
   // Parsed outside the step from checkpointed text, so replays see the exact
   // robots rules the original run used (a live re-fetch could differ and
   // desync the frontier from already-persisted crawl batches).
-  const robots = parseRobotsTxt(origin, discovery.robotsText);
+  const robots = parseRobotsTxt(origin, discovery.robotsText, excludePaths);
   const crawl = await runCrawlPhase(step, {
     ...params,
     origin,
@@ -122,19 +123,19 @@ async function runDiscoveryPhase(
     workflowInstanceId: string;
     origin: string;
     startUrl: string;
-    maxPages: number;
+    config: AuditConfig;
     access?: CrawlerAccess | null;
   },
 ) {
-  const { auditId, workflowInstanceId, origin, startUrl, maxPages, access } =
-    input;
+  const { auditId, workflowInstanceId, origin, startUrl, access } = input;
+  const { maxPages, excludePaths } = input.config;
   // "-v2": the checkpoint shape changed (seeds now live in the scratchpad DO
   // instead of the step return). A pre-refactor instance replayed under this
   // code must re-run discovery — resuming from the old cached {sitemapUrls}
   // shape would leave the scratchpad empty and finalize a zero-page audit.
   return pgStep(step, "discover-urls-v2", DISCOVERY_STEP, async () => {
     const result = await discoverUrls(origin, maxPages, access);
-    const robots = parseRobotsTxt(origin, result.robotsText);
+    const robots = parseRobotsTxt(origin, result.robotsText, excludePaths);
     const scratchpad = getAuditScratchpad(auditId);
 
     // Seeds go straight into the scratchpad frontier — nothing large is
@@ -372,7 +373,10 @@ async function finalizeAudit(args: {
     const linksStartedAt = Date.now();
     const linkIssues = await runScratchpadLinkChecks(auditId, startUrl, {
       ...crawl,
-      completed: crawl.completed && !hasUnreadShells,
+      // Excluded pages are never read, so their links are unknown: a page
+      // linked only from them would be reported as an orphan.
+      completed:
+        crawl.completed && !hasUnreadShells && !config.excludePaths?.length,
     });
     console.info("Audit link checks completed", {
       auditId,
@@ -380,12 +384,8 @@ async function finalizeAudit(args: {
       issueCount: linkIssues.length,
     });
     issues.push(...linkIssues);
-    if (crawl.stoppedBy) {
-      issues.push({
-        issueType: crawl.stoppedBy,
-        pageId: null,
-        pageUrl: startUrl,
-      });
+    if (crawl.stopIssue) {
+      issues.push({ ...crawl.stopIssue, pageId: null, pageUrl: startUrl });
     }
     const persistStartedAt = Date.now();
     await AuditRepository.insertIssues(auditId, issues);
@@ -398,15 +398,14 @@ async function finalizeAudit(args: {
   });
 
   await pgStep(step, "finalize", DB_STEP, async () => {
-    const blockedPages = await AuditRepository.countPagesByFetchClass(
-      auditId,
-      "blocked",
-    );
-    const rateLimitedPages = await AuditRepository.countPagesByFetchClass(
-      auditId,
-      "rate_limited",
-    );
+    const pages = await AuditRepository.countPagesByFetchClass(auditId);
+    // A site that turned the crawler away before it read a page leaves
+    // nothing to report on, which "completed" would hide.
+    const status = auditRefusalReason(pages)
+      ? AuditStatus.Refused
+      : AuditStatus.Completed;
     await AuditRepository.completeAudit(auditId, workflowInstanceId, {
+      status,
       pagesCrawled: crawl.pagesCrawled,
       pagesTotal: crawl.pagesCrawled,
     });
@@ -416,12 +415,12 @@ async function finalizeAudit(args: {
       organizationId: billingCustomer.organizationId,
       properties: {
         project_id: projectId,
-        status: "completed",
+        status,
         pages_crawled: crawl.pagesCrawled,
         pages_total: crawl.pagesCrawled,
         crawl_completed: crawl.completed,
-        pages_blocked: blockedPages,
-        pages_rate_limited: rateLimitedPages,
+        pages_blocked: pages.blocked,
+        pages_rate_limited: pages.rate_limited,
         run_lighthouse: config.lighthouseStrategy !== "none",
       },
     });
