@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, List, Pencil, Play } from "lucide-react";
+import { CalendarDays, Grid3x3, List, Pencil, Play } from "lucide-react";
 import { getLocalTracker, startLocalCheck } from "@/serverFunctions/local-seo";
 import { QueryError, QueryState } from "@/client/components/QueryState";
 import { ConfirmDialog } from "@/client/components/ConfirmDialog";
@@ -14,9 +14,11 @@ import {
   localAreaLabel,
   LocalScanStatus,
 } from "@/shared/local-seo";
+import { LocalAreaDialog } from "./LocalAreaDialog";
 import { LocalKeywordMap } from "./LocalKeywordMap";
 import { LocalKeywordsDialog } from "./LocalKeywordsDialog";
 import { LocalKeywordsTable, latestKeywordScan } from "./LocalKeywordsTable";
+import { useDistanceUnit } from "./useDistanceUnit";
 import type { LocalSeoSearch } from "@/types/schemas/local-seo-search";
 
 type TrackerData = Awaited<ReturnType<typeof getLocalTracker>>;
@@ -76,8 +78,10 @@ function TrackerContent({
 }) {
   const { tracker, keywords, checks, scans, estimate } = data;
   const queryClient = useQueryClient();
+  const unit = useDistanceUnit();
   const [confirm, setConfirm] = useState<string | null>(null);
   const [managingKeywords, setManagingKeywords] = useState(false);
+  const [changingArea, setChangingArea] = useState(false);
   const keyword =
     keywords.find((row) => row.id === search.keyword) ?? keywords[0];
   const latestScan = keyword && latestKeywordScan(scans, keyword.id);
@@ -124,10 +128,19 @@ function TrackerContent({
             <h2 className="text-lg font-semibold">{tracker.title}</h2>
             <p className="text-xs text-muted-foreground">{tracker.address}</p>
             <p className="text-xs text-muted-foreground">
-              {localAreaLabel(tracker)} · Mobile
+              {localAreaLabel(tracker, unit)} · Mobile
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={Boolean(active)}
+              onClick={() => setChangingArea(true)}
+            >
+              <Grid3x3 data-icon="inline-start" />
+              Change area
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -246,6 +259,13 @@ function TrackerContent({
           trackerId={tracker.id}
           keywords={keywords}
           onClose={() => setManagingKeywords(false)}
+        />
+      )}
+      {changingArea && (
+        <LocalAreaDialog
+          projectId={projectId}
+          tracker={tracker}
+          onClose={() => setChangingArea(false)}
         />
       )}
       {confirm && (

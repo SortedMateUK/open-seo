@@ -51,3 +51,6 @@ dist/
 .everyapp/
 .cloudflare/
 .selfhost-secrets-before.json
+
+# built by `stripe apps upload`
+deploy/stripe-app/.build/

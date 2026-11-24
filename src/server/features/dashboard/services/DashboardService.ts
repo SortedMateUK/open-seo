@@ -1,3 +1,4 @@
+import type { AuditStatus } from "@/shared/audit-status";
 import { ProjectRepository } from "@/server/features/projects/repositories/ProjectRepository";
 import { sort } from "remeda";
 import { safeHostname } from "@/shared/safe-url";
@@ -6,6 +7,7 @@ import { AuditRepository } from "@/server/features/audit/repositories/AuditRepos
 import { getIssueTypePageCountsForAudit } from "@/server/features/audit/repositories/auditSummaryQueries";
 import { Ga4ConnectionRepository } from "@/server/features/ga4/repositories/Ga4ConnectionRepository";
 import { GscConnectionRepository } from "@/server/features/gsc/repositories/GscConnectionRepository";
+import { ReportRepository } from "@/server/features/reports/repositories/ReportRepository";
 
 export type DashboardActivation = {
   domain: string | null;
@@ -21,10 +23,11 @@ export type DashboardActivation = {
     // The agent cards above the checklist, separate from the agent step.
     cardDismissed: boolean;
   };
-  // Workspace-wide: research and audits on any project count.
+  // Workspace-wide: research, audits, and skill reports on any project count.
   competitorResearchedAt: string | null;
   keywordsResearchedAt: string | null;
   hasAudit: boolean;
+  hasSkillReport: boolean;
   hasMultipleProjects: boolean;
   hasTeammate: boolean;
   dismissedSteps: string[];
@@ -32,7 +35,7 @@ export type DashboardActivation = {
 
 export type DashboardAuditSummary = {
   id: string;
-  status: "running" | "completed" | "failed";
+  status: AuditStatus;
   pagesCrawled: number;
   // The crawl's page limit; small sites finish below it.
   pagesTotal: number;
@@ -67,6 +70,7 @@ async function getActivation(input: {
     dismissals,
     research,
     hasAudit,
+    hasSkillReport,
   ] = await Promise.all([
     Ga4ConnectionRepository.getByProjectId(input.projectId),
     GscConnectionRepository.getByProjectId(input.projectId),
@@ -77,6 +81,7 @@ async function getActivation(input: {
     ActivationRepository.getDismissals(input),
     ActivationRepository.getWorkspaceResearch(input.organizationId),
     AuditRepository.hasAuditInOrganization(input.organizationId),
+    ReportRepository.hasSkillReportInOrganization(input.organizationId),
   ]);
 
   return {
@@ -98,6 +103,7 @@ async function getActivation(input: {
     competitorResearchedAt: research.competitorResearchedAt,
     keywordsResearchedAt: research.keywordResearchedAt,
     hasAudit,
+    hasSkillReport,
   };
 }
 

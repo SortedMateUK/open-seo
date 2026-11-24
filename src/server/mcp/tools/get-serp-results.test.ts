@@ -15,6 +15,7 @@ vi.mock("cloudflare:workers", () => ({ env: {} }));
 vi.mock("@/server/lib/r2-cache", async (importOriginal) => ({
   ...(await importOriginal<typeof r2CacheModule>()),
   getCached: async (key: string) => mocks.cache.get(key) ?? null,
+  getCachedStrict: async (key: string) => mocks.cache.get(key) ?? null,
   setCached: async (key: string, value: unknown) => {
     mocks.cache.set(key, value);
   },
@@ -190,6 +191,34 @@ describe("get_serp_results", () => {
     expect(post).toHaveBeenLastCalledWith(
       expect.objectContaining({ device: "mobile" }),
     );
+  });
+
+  it("starts a finalUrls search of its own without waiting on it, and a repeat collects it once every read is in", async () => {
+    const reads: Record<string, object> = {
+      t1: completed(organic(1, "a.com")),
+      t2: completed(organic(1, "a.com")),
+    };
+    const post = mockReads(reads);
+    // A finished default search must not answer for it: its URLs are wrapped.
+    await getSerpResultsTool.handler(args, toolContext);
+    const polls = mocks.fetchSerpTaskResult.mock.calls.length;
+    const finalUrls = { ...args, finalUrls: true };
+
+    const first = await getSerpResultsTool.handler(finalUrls, toolContext);
+    expect(post).toHaveBeenLastCalledWith(
+      expect.objectContaining({ finalUrls: true }),
+    );
+    expect(textContent(first)).toContain("2-3 minutes");
+    expect(mocks.fetchSerpTaskResult).toHaveBeenCalledTimes(polls);
+
+    reads.t2 = { status: "pending" };
+    const early = await getSerpResultsTool.handler(finalUrls, toolContext);
+    expect(textContent(early)).toContain("2-3 minutes");
+
+    reads.t2 = completed(organic(1, "a.com"));
+    const repeat = await getSerpResultsTool.handler(finalUrls, toolContext);
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(itemsOf(repeat)[0]).toMatchObject({ seenIn: 2 });
   });
 
   it("answers with the reads that are back, and a repeat merges in the late one", async () => {

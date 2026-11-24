@@ -1,5 +1,5 @@
 import { MetricsTable } from "@/client/components/MetricsTable";
-import { useMemo, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 import { ShieldAlert } from "lucide-react";
 import {
   exportIssues,
@@ -17,6 +17,7 @@ import {
 } from "@/client/features/audit/results/IssuesView";
 import { PagesTable } from "@/client/features/audit/results/PagesTable";
 import { ShopifyCrawlWarning } from "@/client/features/audit/results/ShopifyCrawlWarning";
+import { ShopifyRateLimitAlert } from "@/client/features/audit/results/ShopifyRateLimitAlert";
 import { RenderingWarnings } from "@/client/features/audit/results/RenderingWarnings";
 import { PerformanceTable } from "@/client/features/audit/results/ResultsTables";
 import {
@@ -33,6 +34,7 @@ import {
 } from "@/client/components/ui/alert";
 import { DataTableTabs } from "@/client/components/table/DataTableToolbar";
 import { TabsTrigger } from "@/client/components/ui/tabs";
+import { AuditStatus } from "@/shared/audit-status";
 
 type ResultsTab = "issues" | "pages" | "performance";
 
@@ -41,14 +43,11 @@ export function ResultsView({
   data,
   onTabChange,
   tab,
-  siteBlocked,
 }: {
   projectId: string;
   data: AuditResultsData;
   tab: string;
   onTabChange: (tab: ResultsTab) => void;
-  /** The page already says bot protection blocked the whole site. */
-  siteBlocked: boolean;
 }) {
   const { audit, lighthouse, issueGroups } = data;
   const auditRef = { projectId, auditId: audit.id };
@@ -62,10 +61,13 @@ export function ResultsView({
   const blockedCount = data.fetchClassCounts.blocked;
   const rateLimitedCount = data.fetchClassCounts.rate_limited;
 
-  // Shopify stores get their own notice instead of the generic advice.
-  const shopifyLimited =
-    audit.config.sitePlatform === "shopify" &&
-    (blockedCount > 0 || rateLimitedCount > 0 || crawlStopped);
+  // Shopify stores get their own notices instead of the generic advice: one
+  // for pages it rate limited, and the signature setup for a crawl it only
+  // blocked.
+  const isShopify = audit.config.sitePlatform === "shopify";
+  const shopifyRateLimited = isShopify && rateLimitedCount > 0;
+  const shopifyBlocked = isShopify && !shopifyRateLimited && blockedCount > 0;
+  const shopifyNotice = shopifyRateLimited || shopifyBlocked;
 
   const tabs = (
     <ResultsHeader
@@ -89,22 +91,43 @@ export function ResultsView({
     />
   );
 
+  const excludePaths = audit.config.excludePaths ?? [];
+
   return (
     <>
-      {shopifyLimited && (
-        <ShopifyCrawlWarning
+      {excludePaths.length > 0 && (
+        <p className="text-sm text-muted-foreground">
+          This audit skipped pages matching{" "}
+          {excludePaths.map((path, index) => (
+            <Fragment key={path}>
+              {index > 0 && ", "}
+              <code>{path}</code>
+            </Fragment>
+          ))}
+          . The orphan page check didn't run, because links from skipped pages
+          aren't known.
+        </p>
+      )}
+
+      {shopifyRateLimited && (
+        <ShopifyRateLimitAlert
           projectId={projectId}
           audit={audit}
-          throttled={rateLimitedCount > 0 || crawlStopped}
+          rateLimitedCount={rateLimitedCount}
         />
       )}
 
-      {!shopifyLimited && !siteBlocked && blockedCount > 0 && (
+      {shopifyBlocked && (
+        <ShopifyCrawlWarning projectId={projectId} audit={audit} />
+      )}
+
+      {!shopifyNotice && blockedCount > 0 && (
         <Alert variant="warning">
           <ShieldAlert />
           <AlertTitle>
-            Bot protection blocked our crawler on {blockedCount}{" "}
-            {blockedCount === 1 ? "page" : "pages"}.
+            {audit.status === AuditStatus.Refused && rateLimitedCount === 0
+              ? "This site's bot protection blocked our crawler."
+              : `Bot protection blocked our crawler on ${blockedCount} ${blockedCount === 1 ? "page" : "pages"}.`}
           </AlertTitle>
           <AlertDescription>
             <BotProtectionAdvice
@@ -115,7 +138,7 @@ export function ResultsView({
         </Alert>
       )}
 
-      {!shopifyLimited && (rateLimitedCount > 0 || crawlStopped) && (
+      {!shopifyNotice && (rateLimitedCount > 0 || crawlStopped) && (
         <Alert variant="warning">
           <ShieldAlert />
           <AlertTitle>
